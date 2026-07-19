@@ -145,6 +145,18 @@ main{position:relative;z-index:2}
 .stars{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
 .stars .row{display:flex;justify-content:space-between;padding:12px 16px;border-radius:14px;background:var(--surface);border:1px solid var(--border);font-size:14px}
 .stars .s{color:var(--amber);letter-spacing:2px;font-size:12px}
+/* interactive simulator inside education modal */
+.sim{display:flex;align-items:center;gap:16px;margin:6px 0 16px}
+.sim input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);outline:none}
+.sim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--simCol,var(--purple));border:2px solid #fff;cursor:grab;box-shadow:0 3px 12px rgba(0,0,0,.35);transition:transform .2s var(--spring)}
+.sim input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.18)}
+.sim input[type=range]::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.05)}
+.sim input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--simCol,var(--purple));border:2px solid #fff;cursor:grab}
+.sim-val{font-family:var(--mono);font-size:21px;font-weight:600;min-width:104px;text-align:right}
+.sim-val .unit{font-size:13px;color:var(--muted)}
+.sim-verdict{font-size:13px;font-weight:600;margin:-6px 0 14px;letter-spacing:.01em}
+#simStars .s{transition:none}
+#simStars .row{transition:background .3s}
 
 /* readiness */
 .ready-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin:44px 0 120px}
@@ -501,15 +513,61 @@ let W,H,mx=.5,my=.5;
 function sizeBG(){W=bg.width=innerWidth;H=bg.height=innerHeight}
 sizeBG();addEventListener('resize',sizeBG);
 addEventListener('pointermove',e=>{mx=e.clientX/innerWidth;my=e.clientY/innerHeight});
-const stars = Array.from({length:90},()=>({x:Math.random(),y:Math.random(),z:Math.random()*.8+.2,tw:Math.random()*Math.PI*2}));
+const BGPAL=['#8b5cf6','#38bdf8','#34d399','#fbbf24','#f472b6'];
+const stars = Array.from({length:70},()=>({x:Math.random(),y:Math.random(),z:Math.random()*.8+.2,tw:Math.random()*Math.PI*2}));
+// drifting data nodes that wire themselves into a living network mesh
+const nodes = Array.from({length:26},()=>({
+  x:Math.random(),y:Math.random(),
+  vx:(Math.random()-.5)*.00018,vy:(Math.random()-.5)*.00018,
+  c:Math.floor(Math.random()*BGPAL.length),r:Math.random()*1.7+.8
+}));
+// occasional packet pulse travelling along a live edge
+let pulses=[];
 (function bgLoop(t){
   bctx.clearRect(0,0,W,H);
+  const ox=(mx-.5)*.02, oy=(my-.5)*.02;
+  // twinkling stars (parallax)
   for(const s of stars){
     const px=(s.x+(mx-.5)*.03*s.z)*W, py=(s.y+(my-.5)*.03*s.z)*H;
-    const a=.3+.35*Math.sin(t*.001+s.tw);
-    bctx.beginPath();bctx.arc(px,py,s.z*2.2,0,7);
-    bctx.fillStyle=`hsla(${(s.tw*130)%360},75%,55%,${a*s.z*.8})`;bctx.fill();
+    const a=.28+.32*Math.sin(t*.001+s.tw);
+    bctx.beginPath();bctx.arc(px,py,s.z*2,0,7);
+    bctx.fillStyle=`hsla(${(s.tw*130)%360},75%,55%,${a*s.z*.7})`;bctx.fill();
   }
+  // advect nodes
+  for(const n of nodes){
+    n.x+=n.vx;n.y+=n.vy;
+    if(n.x<0||n.x>1)n.vx*=-1;if(n.y<0||n.y>1)n.vy*=-1;
+    n.x=clamp(n.x,0,1);n.y=clamp(n.y,0,1);
+  }
+  // wire close nodes together
+  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+    const a=nodes[i],b=nodes[j];
+    const dx=(a.x-b.x)*W, dy=(a.y-b.y)*H, dist=Math.hypot(dx,dy);
+    if(dist<160){
+      bctx.strokeStyle=BGPAL[a.c];bctx.globalAlpha=(1-dist/160)*.13;bctx.lineWidth=1;
+      bctx.beginPath();bctx.moveTo((a.x+ox)*W,(a.y+oy)*H);bctx.lineTo((b.x+ox)*W,(b.y+oy)*H);bctx.stroke();
+      // rarely fire a packet down a near edge
+      if(dist<120&&Math.random()<.0006)pulses.push({a,b,p:0,c:a.c});
+    }
+  }
+  bctx.globalAlpha=1;
+  // glowing nodes
+  for(const n of nodes){
+    const px=(n.x+ox)*W, py=(n.y+oy)*H, pulse=.6+.4*Math.sin(t*.002+n.x*12);
+    bctx.beginPath();bctx.arc(px,py,n.r*pulse+.6,0,7);
+    bctx.fillStyle=BGPAL[n.c];bctx.globalAlpha=.55*pulse;bctx.fill();
+  }
+  // travelling packets
+  pulses=pulses.filter(pl=>pl.p<1);
+  for(const pl of pulses){
+    pl.p+=.012;
+    const px=(lerp(pl.a.x,pl.b.x,pl.p)+ox)*W, py=(lerp(pl.a.y,pl.b.y,pl.p)+oy)*H;
+    bctx.shadowColor=BGPAL[pl.c];bctx.shadowBlur=10;
+    bctx.beginPath();bctx.arc(px,py,2.4,0,7);
+    bctx.fillStyle=BGPAL[pl.c];bctx.globalAlpha=.9*(1-pl.p);bctx.fill();
+    bctx.shadowBlur=0;
+  }
+  bctx.globalAlpha=1;
   requestAnimationFrame(bgLoop);
 })(0);
 
@@ -1156,13 +1214,46 @@ function openModal(m,g,col){
   $('#mVal').textContent=`Your value: ${m.val} ${m.unit}`;
   $('#mVal').style.color=col;
   const stars=v=>{const n=clamp(Math.round(clamp(v,0,1.4)/1.4*5),1,5);return'★'.repeat(n)+'<span style="opacity:.25">'+'★'.repeat(5-n)+'</span>'};
+  // simulator config: lower-is-better metrics invert the scaling
+  const SIM={
+    download:{lower:false,min:5,max:1000,step:5},
+    upload:{lower:false,min:2,max:500,step:2},
+    latency:{lower:true,min:2,max:300,step:1},
+    jitter:{lower:true,min:.5,max:60,step:.5},
+    stability:{lower:false,min:0,max:100,step:1},
+    loss:{lower:true,min:0,max:20,step:.1}
+  }[m.id];
+  const cur=Math.max(.01,parseFloat(m.val)||0);
+  const origApps=m.edu.apps.map(a=>[a[0],a[1]]);
+  const simStep=SIM.step, simStart=clamp(cur,SIM.min,SIM.max);
   $('#mBody').innerHTML=`
     <div class="m-sec" style="animation-delay:.15s"><h5>Definition</h5><p>${m.edu.what}</p></div>
     <div class="m-sec" style="animation-delay:.3s"><h5>Why it matters</h5><p>${m.edu.why}</p></div>
     <div class="m-sec" style="animation-delay:.45s"><h5>In the real world</h5><p>${m.edu.real}</p></div>
     <div class="m-sec" style="animation-delay:.6s"><h5>What it means for you</h5>
       <div class="stars">${m.edu.apps.map(([n,v])=>`<div class="row"><span>${n}</span><span class="s">${stars(v)}</span></div>`).join('')}</div></div>
-    <div class="m-sec" style="animation-delay:.75s"><h5>How to improve</h5><p>${m.edu.tips}</p></div>`;
+    <div class="m-sec" style="animation-delay:.75s"><h5>How to improve</h5><p>${m.edu.tips}</p></div>
+    <div class="m-sec" style="animation-delay:.9s;--simCol:${col}"><h5>Try it yourself · interactive</h5>
+      <p style="margin-bottom:12px">Drag to imagine a different ${m.name.toLowerCase()} — watch live what it unlocks. ${SIM.lower?'Lower is better here.':'Higher is better here.'}</p>
+      <div class="sim">
+        <input id="simRange" type="range" min="${SIM.min}" max="${SIM.max}" step="${simStep}" value="${simStart}">
+        <div class="sim-val"><span id="simNum">${fmt(simStart)}</span><span class="unit"> ${m.unit}</span></div>
+      </div>
+      <div class="sim-verdict" id="simVerdict"></div>
+      <div class="stars" id="simStars"></div>
+    </div>`;
+  // live recompute: scale each app rating by the simulated-vs-actual ratio
+  const renderSim=v=>{
+    v=Math.max(.01,v);
+    $('#simNum').textContent=fmt(v);
+    const scale=SIM.lower?(cur/v):(v/cur);
+    const avg=origApps.reduce((s,[,r])=>s+clamp(r*scale,0,1.4),0)/origApps.length;
+    const [vt,vc]=avg>=1?['Everything flies ✨',COLORS.green]:avg>=.6?['Solid for most things',COLORS.blue]:avg>=.35?['Usable, with limits',COLORS.amber]:['Struggles here',COLORS.red];
+    const dv=$('#simVerdict');dv.textContent=vt;dv.style.color=vc;
+    $('#simStars').innerHTML=origApps.map(([n,r])=>`<div class="row"><span>${n}</span><span class="s">${stars(r*scale)}</span></div>`).join('');
+  };
+  $('#simRange').addEventListener('input',e=>renderSim(parseFloat(e.target.value)));
+  renderSim(simStart);
   $('#modalBack').classList.add('open');
   document.body.style.overflow='hidden';
   // big animation canvas re-uses the card scene
