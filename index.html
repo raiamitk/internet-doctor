@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internet Doctor — Understand your Internet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07060f;
+  --surface:rgba(255,255,255,.04);
+  --surface-2:rgba(255,255,255,.07);
+  --border:rgba(255,255,255,.09);
+  --text:#f2f0ff;
+  --muted:rgba(235,232,255,.55);
+  --faint:rgba(235,232,255,.32);
+  --purple:#8b5cf6;
+  --blue:#38bdf8;
+  --green:#34d399;
+  --amber:#fbbf24;
+  --pink:#f472b6;
+  --orange:#fb923c;
+  --red:#f87171;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --font:'Inter',system-ui,sans-serif;
+  --serif:'Instrument Serif',serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(139,92,246,.4)}
+
+/* ---------- animated background ---------- */
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;mix-blend-mode:screen;will-change:transform}
+.blob.b1{width:55vw;height:55vw;background:radial-gradient(circle,#6d28d9 0%,transparent 70%);top:-18%;left:-12%;animation:drift1 26s var(--ease) infinite alternate}
+.blob.b2{width:45vw;height:45vw;background:radial-gradient(circle,#0ea5e9 0%,transparent 70%);top:20%;right:-15%;animation:drift2 32s var(--ease) infinite alternate}
+.blob.b3{width:40vw;height:40vw;background:radial-gradient(circle,#db2777 0%,transparent 70%);bottom:-15%;left:22%;opacity:.35;animation:drift3 38s var(--ease) infinite alternate}
+.blob.b4{width:30vw;height:30vw;background:radial-gradient(circle,#059669 0%,transparent 70%);bottom:15%;right:20%;opacity:.25;animation:drift1 44s var(--ease) infinite alternate-reverse}
+@keyframes drift1{from{transform:translate(0,0) scale(1)}to{transform:translate(10vw,8vh) scale(1.2)}}
+@keyframes drift2{from{transform:translate(0,0) scale(1.1)}to{transform:translate(-8vw,-10vh) scale(.9)}}
+@keyframes drift3{from{transform:translate(0,0)}to{transform:translate(6vw,-12vh) scale(1.25)}}
+.noise{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+main{position:relative;z-index:2}
+
+/* ---------- hero ---------- */
+.hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;position:relative}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:100px;border:1px solid var(--border);background:var(--surface);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);backdrop-filter:blur(12px);opacity:0;animation:rise 1s var(--ease) .2s forwards}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hero h1{font-size:clamp(56px,11vw,150px);font-weight:800;letter-spacing:-.045em;line-height:1.0;margin:28px 0 8px;opacity:0;animation:rise 1.1s var(--ease) .38s forwards}
+.hero h1 .grad{background:linear-gradient(100deg,#c4b5fd,#38bdf8 35%,#34d399 62%,#fbbf24 88%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:gradmove 7s ease infinite}
+.hero h1 em{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:-.02em}
+@keyframes gradmove{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero p.tag{font-size:clamp(18px,2.4vw,26px);color:var(--muted);max-width:620px;line-height:1.55;font-weight:400;opacity:0;animation:rise 1.1s var(--ease) .58s forwards}
+@keyframes rise{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:translateY(0)}}
+.cta{margin-top:52px;opacity:0;animation:rise 1.1s var(--ease) .78s forwards}
+.btn-hero{position:relative;font-family:var(--font);font-size:19px;font-weight:600;color:#fff;padding:22px 54px;border-radius:100px;border:none;cursor:pointer;background:linear-gradient(120deg,#7c3aed,#2563eb 55%,#0891b2);background-size:200% 100%;transition:transform .5s var(--spring),box-shadow .5s var(--ease),background-position .8s var(--ease);box-shadow:0 8px 40px -6px rgba(124,58,237,.55),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn-hero:hover{transform:translateY(-4px) scale(1.04);background-position:100% 0;box-shadow:0 18px 60px -8px rgba(56,189,248,.6),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn-hero:active{transform:translateY(-1px) scale(.98)}
+.hero-hint{margin-top:22px;font-size:13px;color:var(--faint);opacity:0;animation:rise 1s var(--ease) 1s forwards}
+.scroll-cue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);color:var(--faint);font-size:12px;letter-spacing:.2em;text-transform:uppercase;opacity:0;animation:rise 1s var(--ease) 1.4s forwards}
+.scroll-cue::after{content:"";display:block;width:1px;height:44px;margin:10px auto 0;background:linear-gradient(to bottom,var(--faint),transparent);animation:cue 2s ease infinite}
+@keyframes cue{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ---------- test stage ---------- */
+.stage{min-height:100svh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
+.stage.active{display:flex}
+.stage-label{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
+.stage-title{font-size:clamp(30px,4.6vw,54px);font-weight:800;letter-spacing:-.03em;min-height:1.2em;transition:opacity .4s}
+.stage-title em{font-family:var(--serif);font-style:italic;font-weight:400}
+#testViz{width:min(860px,92vw);height:340px;margin:36px 0 8px;border-radius:28px;border:1px solid var(--border);background:rgba(10,8,24,.55);backdrop-filter:blur(16px);box-shadow:0 30px 80px -30px rgba(0,0,0,.8)}
+.live-readout{font-family:var(--mono);font-size:clamp(44px,7vw,84px);font-weight:600;letter-spacing:-.03em;line-height:1;margin-top:12px}
+.live-readout .unit{font-size:.32em;color:var(--muted);font-weight:400;margin-left:8px}
+.stage-steps{display:flex;gap:10px;margin-top:34px}
+.step-pill{padding:9px 20px;border-radius:100px;font-size:13px;font-weight:500;color:var(--faint);border:1px solid var(--border);background:var(--surface);transition:all .6s var(--ease)}
+.step-pill.on{color:#fff;border-color:rgba(139,92,246,.6);background:rgba(139,92,246,.18);box-shadow:0 0 24px -4px rgba(139,92,246,.5)}
+.step-pill.done{color:var(--green);border-color:rgba(52,211,153,.4)}
+
+/* ---------- dashboard ---------- */
+.dash{display:none;padding:110px 24px 140px;max-width:1180px;margin:0 auto}
+.dash.active{display:block}
+.reveal{opacity:0;transform:translateY(44px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+.sec-label{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint);margin-bottom:16px}
+.sec-title{font-size:clamp(34px,5vw,58px);font-weight:800;letter-spacing:-.035em;line-height:1.08;margin-bottom:14px}
+.sec-title em{font-family:var(--serif);font-style:italic;font-weight:400}
+.sec-sub{color:var(--muted);font-size:17px;line-height:1.6;max-width:560px}
+
+/* score hero */
+.score-wrap{display:flex;flex-wrap:wrap;align-items:center;gap:64px;justify-content:center;text-align:left;padding:40px 0 110px}
+.score-ring{position:relative;width:300px;height:300px;flex-shrink:0}
+.score-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.score-ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-ring .num b{font-size:84px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.score-ring .num span{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.persona{display:flex;align-items:center;gap:18px;margin-top:26px;padding:18px 24px;border-radius:20px;border:1px solid var(--border);background:var(--surface);backdrop-filter:blur(12px)}
+.persona .emoji{font-size:44px;animation:bob 3.4s ease infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-9px) rotate(5deg)}}
+.persona h3{font-size:21px;font-weight:700;letter-spacing:-.02em}
+.persona p{color:var(--muted);font-size:14px;margin-top:3px;max-width:380px;line-height:1.5}
+
+/* journey */
+.journey-card{border-radius:30px;border:1px solid var(--border);background:rgba(12,10,28,.5);backdrop-filter:blur(16px);padding:20px;margin:44px 0 120px;overflow:hidden}
+#journeySvg{width:100%;height:auto;display:block}
+
+/* metric grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin:48px 0 120px}
+.card{position:relative;border-radius:26px;border:1px solid var(--border);background:var(--surface);backdrop-filter:blur(16px);padding:26px;cursor:pointer;overflow:hidden;transition:transform .55s var(--spring),box-shadow .55s var(--ease),border-color .55s}
+.card::before{content:"";position:absolute;inset:0;background:radial-gradient(500px circle at var(--mx,50%) var(--my,0%),var(--glow,rgba(139,92,246,.14)),transparent 65%);opacity:0;transition:opacity .5s}
+.card:hover{transform:translateY(-8px) scale(1.015);border-color:rgba(255,255,255,.2);box-shadow:0 26px 70px -22px rgba(0,0,0,.75),0 0 50px -18px var(--glowStrong,rgba(139,92,246,.45))}
+.card:hover::before{opacity:1}
+.card .head{display:flex;justify-content:space-between;align-items:baseline;position:relative}
+.card h4{font-size:14px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.card .grade{font-size:12px;font-weight:700;padding:5px 12px;border-radius:100px}
+.card .val{font-family:var(--mono);font-size:46px;font-weight:600;letter-spacing:-.03em;margin:14px 0 2px;position:relative}
+.card .val .unit{font-size:16px;color:var(--muted);font-weight:400}
+.card .desc{font-size:13.5px;color:var(--faint);position:relative;line-height:1.5}
+.card canvas{width:100%;height:96px;display:block;margin-top:16px;border-radius:14px}
+.card .learn{position:absolute;top:20px;right:20px;font-size:11px;color:var(--faint);opacity:0;transition:opacity .4s;letter-spacing:.08em}
+.card:hover .learn{opacity:1}
+
+/* modal / education mode */
+#modalBack{position:fixed;inset:0;z-index:50;background:rgba(5,4,14,.6);backdrop-filter:blur(18px);opacity:0;pointer-events:none;transition:opacity .5s var(--ease);display:flex;align-items:center;justify-content:center;padding:22px}
+#modalBack.open{opacity:1;pointer-events:auto}
+#modal{width:min(760px,100%);max-height:88svh;overflow-y:auto;border-radius:32px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(170deg,rgba(28,22,58,.92),rgba(10,8,24,.96));box-shadow:0 50px 120px -30px rgba(0,0,0,.9);padding:44px;transform:translateY(50px) scale(.92);transition:transform .6s var(--spring)}
+#modalBack.open #modal{transform:none}
+#modal::-webkit-scrollbar{width:5px}
+#modal::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:10px}
+.m-close{position:sticky;top:0;float:right;width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:17px;cursor:pointer;transition:all .3s}
+.m-close:hover{color:#fff;transform:rotate(90deg)}
+.m-kicker{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+.m-title{font-size:clamp(32px,4.5vw,46px);font-weight:800;letter-spacing:-.03em;margin:8px 0 4px}
+.m-title em{font-family:var(--serif);font-style:italic;font-weight:400}
+.m-val{font-family:var(--mono);font-size:22px;color:var(--muted);margin-bottom:22px}
+#mAnim{width:100%;height:190px;border-radius:20px;border:1px solid var(--border);margin-bottom:26px}
+.m-sec{margin-bottom:22px;opacity:0;transform:translateY(18px);animation:rise .8s var(--ease) forwards}
+.m-sec h5{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--purple);margin-bottom:8px}
+.m-sec p{color:var(--muted);line-height:1.7;font-size:15.5px}
+.stars{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.stars .row{display:flex;justify-content:space-between;padding:12px 16px;border-radius:14px;background:var(--surface);border:1px solid var(--border);font-size:14px}
+.stars .s{color:var(--amber);letter-spacing:2px;font-size:12px}
+
+/* readiness */
+.ready-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin:44px 0 120px}
+.ready{border-radius:20px;border:1px solid var(--border);background:var(--surface);backdrop-filter:blur(12px);padding:22px 18px;text-align:center;transition:transform .5s var(--spring),box-shadow .5s}
+.ready:hover{transform:translateY(-6px) scale(1.04)}
+.ready .ic{font-size:32px;display:block;margin-bottom:10px}
+.ready b{font-size:14px;font-weight:600;display:block}
+.ready .verdict{font-size:12px;margin-top:8px;font-weight:600;padding:4px 10px;border-radius:100px;display:inline-block}
+.ready .bar{height:4px;border-radius:10px;background:rgba(255,255,255,.08);margin-top:12px;overflow:hidden}
+.ready .bar i{display:block;height:100%;border-radius:10px;width:0;transition:width 1.4s var(--ease)}
+
+/* diagnosis */
+.diag-card{border-radius:30px;border:1px solid var(--border);background:linear-gradient(160deg,rgba(139,92,246,.1),rgba(14,165,233,.06));backdrop-filter:blur(16px);padding:clamp(28px,4vw,52px);margin:44px 0 120px}
+.diag-line{display:flex;gap:16px;margin-bottom:20px;opacity:0;transform:translateY(16px);transition:all .8s var(--ease)}
+.diag-line.show{opacity:1;transform:none}
+.diag-line .ic{width:42px;height:42px;flex-shrink:0;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:19px;background:var(--surface-2);border:1px solid var(--border)}
+.diag-line p{color:var(--muted);line-height:1.65;font-size:15.5px;padding-top:8px}
+.diag-line p b{color:var(--text)}
+
+.again{display:block;margin:0 auto;font-family:var(--font);font-size:16px;font-weight:600;color:var(--text);padding:16px 40px;border-radius:100px;border:1px solid var(--border);background:var(--surface);cursor:pointer;backdrop-filter:blur(12px);transition:all .5s var(--spring)}
+.again:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.25);box-shadow:0 14px 40px -12px rgba(139,92,246,.5)}
+
+footer{position:relative;z-index:2;text-align:center;padding:50px 24px 60px;color:var(--faint);font-size:13px}
+footer b{color:var(--muted)}
+@media (max-width:640px){.score-wrap{gap:36px}.hero h1{line-height:1.05}}
+
+/* ---------- single-screen bento dashboard ---------- */
+.dash{max-width:1560px;padding:28px 22px 60px}
+.dash-top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.dash-top h2{font-size:clamp(26px,3vw,38px);font-weight:800;letter-spacing:-.03em}
+.dash-top h2 em{font-family:var(--serif);font-style:italic;font-weight:400}
+.dash-top .meta{color:var(--faint);font-size:13px;margin-top:4px}
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.tile{border-radius:22px;border:1px solid var(--border);background:var(--surface);backdrop-filter:blur(16px);padding:20px;position:relative;overflow:hidden;transition:transform .5s var(--spring),box-shadow .5s var(--ease),border-color .5s}
+.tile:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.18);box-shadow:0 20px 50px -20px rgba(0,0,0,.7)}
+.tile h4{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.t-score{grid-column:span 3;grid-row:span 2;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(160deg,rgba(139,92,246,.12),rgba(14,165,233,.05))}
+.t-score .score-ring{width:190px;height:190px;margin-bottom:10px}
+.t-score .score-ring .num b{font-size:52px}
+.t-score .score-ring .num span{font-size:10px}
+.t-score .verdict-line{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.t-score .verdict-line em{font-family:var(--serif);font-style:italic;font-weight:400}
+.t-score .meta{color:var(--faint);font-size:12.5px;margin-top:6px;line-height:1.5}
+.t-score .persona{margin-top:16px;padding:12px 16px;gap:12px;text-align:left}
+.t-score .persona .emoji{font-size:32px}
+.t-score .persona h3{font-size:16px}
+.t-score .persona p{font-size:12px;max-width:230px}
+.t-metrics{grid-column:span 6;grid-row:span 2;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:none;border:none;padding:0;backdrop-filter:none;overflow:visible}
+.t-metrics:hover{transform:none;box-shadow:none}
+.card.mini{border-radius:20px;padding:16px 18px 12px}
+.card.mini h4{margin-bottom:0}
+.card.mini .val{font-size:30px;margin:8px 0 0}
+.card.mini .val .unit{font-size:13px}
+.card.mini .grade{font-size:10px;padding:3px 9px}
+.card.mini .desc{display:none}
+.card.mini canvas{height:68px;margin-top:8px}
+.card.mini .learn{top:auto;bottom:10px;right:14px;font-size:9px}
+.t-diag{grid-column:span 3;grid-row:span 2;background:linear-gradient(165deg,rgba(139,92,246,.1),rgba(14,165,233,.05))}
+.t-diag .diag-line{gap:10px;margin-bottom:12px}
+.t-diag .diag-line .ic{width:30px;height:30px;font-size:14px;border-radius:10px}
+.t-diag .diag-line p{font-size:12.5px;line-height:1.5;padding-top:4px}
+.t-journey{grid-column:span 6;padding:14px 18px 6px}
+.t-ready{grid-column:span 6}
+.t-ready .ready-grid{margin:0;grid-template-columns:repeat(4,1fr);gap:10px}
+.t-ready .ready{padding:12px 8px;border-radius:14px}
+.t-ready .ready .ic{font-size:20px;margin-bottom:4px}
+.t-ready .ready b{font-size:11px}
+.t-ready .ready .verdict{font-size:9.5px;margin-top:4px;padding:2px 8px}
+.t-ready .ready .bar{margin-top:7px;height:3px}
+.t-stab{grid-column:span 4}
+.t-stab canvas{width:100%;height:120px;display:block}
+.t-recs{grid-column:span 4}
+.rec-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.rec-row .ric{width:26px;height:26px;flex-shrink:0;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px}
+.t-hist{grid-column:span 4}
+.hist-bars{display:flex;align-items:flex-end;gap:8px;height:110px}
+.hist-bars .hb{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.hist-bars .hb i{display:block;width:100%;border-radius:8px 8px 4px 4px;background:linear-gradient(to top,rgba(139,92,246,.5),#38bdf8,#34d399);height:0;transition:height 1.2s var(--ease);box-shadow:0 0 14px -4px rgba(56,189,248,.5)}
+.hist-bars .hb span{font-size:9.5px;color:var(--faint)}
+.hist-bars .hb b{font-size:11px;color:var(--muted)}
+.dash-actions{display:flex;gap:12px}
+.again{margin:0;padding:12px 26px;font-size:14px}
+@media (max-width:1180px){
+  .t-score,.t-diag{grid-column:span 6;grid-row:span 1}
+  .t-metrics{grid-column:span 12}
+  .t-journey,.t-ready{grid-column:span 12}
+  .t-stab,.t-recs,.t-hist{grid-column:span 6}
+}
+@media (max-width:720px){
+  .bento>.tile,.t-metrics{grid-column:span 12}
+  .t-metrics{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+<style id="theme-playful">
+/* ============================================================
+   PLAYFUL CREAM THEME — inspired by jemini.co / kren.webflow.io
+   ============================================================ */
+:root{
+  --bg:#f4eee1;
+  --ink:#17130b;
+  --surface:#fffdf6;
+  --surface-2:#f8f3e6;
+  --border:rgba(23,19,11,.9);
+  --text:#17130b;
+  --muted:rgba(23,19,11,.62);
+  --faint:rgba(23,19,11,.4);
+  --purple:#6d4aff;
+  --blue:#0084ff;
+  --green:#00a05c;
+  --amber:#e88b00;
+  --pink:#ff5ca8;
+  --orange:#ff5200;
+  --red:#e5484d;
+  --font:'Bricolage Grotesque','Inter',system-ui,sans-serif;
+  --shadow:5px 6px 0 var(--ink);
+  --shadow-lg:9px 11px 0 var(--ink);
+}
+body{background:var(--bg);color:var(--ink)}
+::selection{background:#ffd8c2}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-2.5deg)}75%{transform:rotate(2.5deg)}}
+@keyframes boing{0%{transform:scale(1)}30%{transform:scale(1.12,.88)}55%{transform:scale(.92,1.08)}75%{transform:scale(1.04,.96)}100%{transform:scale(1)}}
+
+/* background: soft pastel blobs + confetti */
+.blob{filter:blur(80px);mix-blend-mode:normal;opacity:.5}
+.blob.b1{background:radial-gradient(circle,#ffd9a8 0%,transparent 70%)}
+.blob.b2{background:radial-gradient(circle,#c9e8ff 0%,transparent 70%)}
+.blob.b3{background:radial-gradient(circle,#ffd2e8 0%,transparent 70%);opacity:.45}
+.blob.b4{background:radial-gradient(circle,#d5f5c6 0%,transparent 70%);opacity:.4}
+.noise{opacity:.035}
+
+/* hero */
+.badge{border:2px solid var(--ink);background:var(--surface);color:var(--ink);font-weight:600;box-shadow:3px 4px 0 var(--ink)}
+.badge .dot{background:var(--green);box-shadow:none}
+.hero h1{font-weight:800;color:var(--ink)}
+.hero h1 .grad{background:linear-gradient(100deg,var(--orange),var(--pink) 40%,var(--purple) 75%,var(--blue));background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.tag{color:var(--muted);font-weight:500}
+.btn-hero{background:var(--orange);border:2.5px solid var(--ink);color:#fff;box-shadow:var(--shadow);text-shadow:0 1px 0 rgba(0,0,0,.2);transition:transform .45s var(--spring),box-shadow .45s var(--ease),background .3s}
+.btn-hero:hover{background:#ff6a1f;transform:translate(-3px,-5px) rotate(-1.5deg);box-shadow:var(--shadow-lg);animation:wiggle .5s var(--ease)}
+.btn-hero:active{transform:translate(2px,3px) scale(.97);box-shadow:2px 2px 0 var(--ink)}
+.scroll-cue::after{background:linear-gradient(to bottom,var(--faint),transparent)}
+
+/* test stage */
+#testViz{background:var(--surface);border:2.5px solid var(--ink);box-shadow:var(--shadow-lg);backdrop-filter:none}
+.stage-title{color:var(--ink)}
+.step-pill{border:2px solid var(--ink);background:var(--surface);color:var(--faint);font-weight:600;box-shadow:3px 3px 0 var(--ink)}
+.step-pill.on{color:#fff;background:var(--purple);border-color:var(--ink);box-shadow:3px 3px 0 var(--ink);animation:boing .6s var(--ease)}
+.step-pill.done{color:var(--green);background:#e8f8ee}
+.live-readout{color:var(--ink)}
+.live-readout .unit{color:var(--muted)}
+
+/* tiles & cards: sticker style */
+.tile,.card{background:var(--surface);border:2.5px solid var(--ink);backdrop-filter:none;box-shadow:var(--shadow)}
+.tile:hover{transform:translate(-2px,-4px) rotate(-.4deg);box-shadow:var(--shadow-lg);border-color:var(--ink)}
+.card:hover{transform:translate(-3px,-5px) rotate(-1deg) scale(1.01);box-shadow:var(--shadow-lg);border-color:var(--ink);animation:wiggle .55s var(--ease)}
+.card::before{display:none}
+.card h4,.tile h4{color:var(--muted);font-weight:700}
+.card .desc{color:var(--faint)}
+.card .learn{color:var(--orange);font-weight:700}
+.t-score{background:linear-gradient(160deg,#fff8ec,#f3e9ff)}
+.t-diag{background:linear-gradient(165deg,#eef4ff,#fff3ea)}
+.persona{border:2px solid var(--ink);background:var(--surface);backdrop-filter:none;box-shadow:4px 4px 0 var(--ink)}
+.persona .emoji{animation:boing 2.6s var(--ease) infinite}
+.persona p{color:var(--muted)}
+.grade{border:1.5px solid var(--ink) !important}
+
+/* readiness */
+.ready{border:2px solid var(--ink);background:var(--surface);backdrop-filter:none;box-shadow:3px 4px 0 var(--ink)}
+.ready:hover{transform:translate(-2px,-4px) rotate(1.2deg) scale(1.03);animation:wiggle .5s var(--ease)}
+.ready .ic{transition:transform .4s var(--spring)}
+.ready:hover .ic{transform:scale(1.3) rotate(-8deg)}
+.ready .bar{background:rgba(23,19,11,.1)}
+
+/* diagnosis + recs */
+.diag-line .ic,.rec-row .ric{background:var(--surface-2);border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink)}
+.diag-line p,.rec-row{color:var(--muted)}
+.diag-line p b{color:var(--ink)}
+
+/* history */
+.hist-bars .hb i{background:linear-gradient(to top,var(--purple),var(--orange));border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink)}
+.hist-bars .hb b{color:var(--ink)}
+
+/* buttons / dash */
+.again{border:2.5px solid var(--ink);background:var(--surface);color:var(--ink);font-weight:700;backdrop-filter:none;box-shadow:4px 5px 0 var(--ink)}
+.again:hover{transform:translate(-2px,-4px) rotate(-1deg);box-shadow:7px 9px 0 var(--ink);animation:wiggle .5s var(--ease)}
+.dash-top h2{color:var(--ink)}
+
+/* modal */
+#modalBack{background:rgba(244,238,225,.55)}
+#modal{background:var(--surface);border:3px solid var(--ink);box-shadow:12px 14px 0 var(--ink)}
+#mAnim{border:2px solid var(--ink);background:var(--surface-2)}
+.m-close{border:2px solid var(--ink);background:var(--surface);color:var(--ink);box-shadow:2px 2px 0 var(--ink)}
+.m-sec h5{color:var(--orange)}
+.m-sec p{color:var(--muted)}
+.m-title{color:var(--ink)}
+.stars .row{background:var(--surface-2);border:1.5px solid var(--ink)}
+.stars .s{color:var(--amber)}
+
+footer{color:var(--faint)}footer b{color:var(--ink)}
+#modal::-webkit-scrollbar-thumb{background:rgba(23,19,11,.25)}
+
+/* ---------- single-view layout, journey last & full width ---------- */
+.t-ready{grid-column:span 5}
+.t-stab{grid-column:span 4}
+.t-recs{grid-column:span 3}
+.t-hist{grid-column:span 12;padding-bottom:14px}
+.t-hist .hist-bars{height:74px;gap:14px}
+.t-journey{grid-column:span 12;padding:16px 22px 4px}
+.t-ready .ready-grid{grid-template-columns:repeat(4,1fr)}
+@media (max-width:1180px){.t-ready{grid-column:span 12}.t-stab,.t-recs{grid-column:span 6}}
+
+/* ---------- minions! ---------- */
+@keyframes legrun1{from{transform:rotate(-28deg)}to{transform:rotate(28deg)}}
+@keyframes legrun2{from{transform:rotate(28deg)}to{transform:rotate(-28deg)}}
+@keyframes armswing{from{transform:rotate(18deg)}to{transform:rotate(-24deg)}}
+@keyframes bodybob{from{transform:translateY(0) rotate(-3deg)}to{transform:translateY(-3px) rotate(3deg)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.minion .leg1{animation:legrun1 .18s linear infinite alternate;transform-origin:top;transform-box:fill-box}
+.minion .leg2{animation:legrun2 .18s linear infinite alternate;transform-origin:top;transform-box:fill-box}
+.minion .arm{animation:armswing .18s linear infinite alternate;transform-origin:top;transform-box:fill-box}
+.minion .body{animation:bodybob .3s ease-in-out infinite alternate;transform-box:fill-box}
+.minion .pupil{animation:blink 3.4s ease infinite;transform-origin:center;transform-box:fill-box}
+.bub{opacity:0;animation:bubcycle 16s ease infinite}
+@keyframes bubcycle{0%,4%{opacity:0;transform:translateY(8px) scale(.85)}7%,16%{opacity:1;transform:translateY(0) scale(1)}20%,100%{opacity:0;transform:translateY(-6px) scale(.9)}}
+</style>
+</head>
+<body>
+<div class="aurora">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
+</div>
+<canvas id="bgCanvas"></canvas>
+<div class="noise"></div>
+
+<main>
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="badge"><span class="dot"></span>Live diagnostics</div>
+    <h1>Internet <em class="grad">Doctor</em></h1>
+    <p class="tag">Understand your Internet. Not just numbers — a living, visual story of every packet you send.</p>
+    <div class="cta"><button class="btn-hero" id="startBtn">Start Health Check</button></div>
+    <div class="hero-hint">No install · ~30 seconds · Real measurements</div>
+    <div class="scroll-cue">Begin</div>
+  </section>
+
+  <!-- TEST STAGE -->
+  <section class="stage" id="stage">
+    <div class="stage-label" id="stageLabel">Examining</div>
+    <div class="stage-title" id="stageTitle">Warming up<em>…</em></div>
+    <canvas id="testViz"></canvas>
+    <div class="live-readout" id="liveVal">—</div>
+    <div class="stage-steps">
+      <div class="step-pill" data-step="latency">Latency</div>
+      <div class="step-pill" data-step="jitter">Jitter</div>
+      <div class="step-pill" data-step="download">Download</div>
+      <div class="step-pill" data-step="upload">Upload</div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD (single-screen bento) -->
+  <section class="dash" id="dash">
+    <div class="dash-top reveal">
+      <div>
+        <h2>Your Internet, <em>alive.</em></h2>
+        <div class="meta" id="dashMeta"></div>
+      </div>
+      <div class="dash-actions"><button class="again" id="againBtn">Test again ↺</button></div>
+    </div>
+    <div class="bento">
+
+      <div class="tile t-score reveal">
+        <div class="score-ring">
+          <svg viewBox="0 0 300 300">
+            <defs>
+              <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#8b5cf6"/><stop offset="55%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#34d399"/>
+              </linearGradient>
+            </defs>
+            <circle cx="150" cy="150" r="128" fill="none" stroke="rgba(23,19,11,.1)" stroke-width="16"/>
+            <circle id="ringArc" cx="150" cy="150" r="128" fill="none" stroke="url(#ringGrad)" stroke-width="16" stroke-linecap="round" stroke-dasharray="804" stroke-dashoffset="804" style="transition:stroke-dashoffset 2.4s var(--ease);filter:drop-shadow(0 0 18px rgba(56,189,248,.5))"/>
+          </svg>
+          <div class="num"><b id="scoreNum">0</b><span>Internet Score</span></div>
+        </div>
+        <div class="verdict-line" id="verdictTitle">Your internet is <em>healthy.</em></div>
+        <div class="meta" id="verdictSub"></div>
+        <div class="persona">
+          <div class="emoji" id="personaEmoji">🚀</div>
+          <div><h3 id="personaName">The Rocket</h3><p id="personaDesc"></p></div>
+        </div>
+      </div>
+
+      <div class="t-metrics reveal" id="metricGrid"></div>
+
+      <div class="tile t-diag reveal">
+        <h4>✦ AI Diagnosis</h4>
+        <div id="diagCard"></div>
+      </div>
+
+      <div class="tile t-ready reveal">
+        <h4>Application readiness</h4>
+        <div class="ready-grid" id="readyGrid"></div>
+      </div>
+
+      <div class="tile t-stab reveal">
+        <h4>Latency heartbeat · this test</h4>
+        <canvas id="stabCanvas"></canvas>
+      </div>
+
+      <div class="tile t-recs reveal">
+        <h4>Recommendations</h4>
+        <div id="recList"></div>
+      </div>
+
+      <div class="tile t-hist reveal">
+        <h4>Score history</h4>
+        <div class="hist-bars" id="histBars"></div>
+      </div>
+
+      <div class="tile t-journey reveal">
+        <h4>The journey of your click · a tiny epic</h4>
+        <svg id="journeySvg" viewBox="0 0 1100 260"></svg>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer>Made with <b>Internet Doctor</b> · Understand your Internet</footer>
+
+<!-- EDUCATION MODAL -->
+<div id="modalBack">
+  <div id="modal">
+    <button class="m-close" id="mClose">✕</button>
+    <div class="m-kicker" id="mKicker">Education mode</div>
+    <div class="m-title" id="mTitle"></div>
+    <div class="m-val" id="mVal"></div>
+    <canvas id="mAnim"></canvas>
+    <div id="mBody"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   INTERNET DOCTOR — single-file experience
+   ============================================================ */
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const lerp=(a,b,t)=>a+(b-a)*t;
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const fmt=(n,d=1)=>n>=100?Math.round(n):n.toFixed(d);
+
+/* ---------- ambient particle background ---------- */
+const bg = $('#bgCanvas'), bctx = bg.getContext('2d');
+let W,H,mx=.5,my=.5;
+function sizeBG(){W=bg.width=innerWidth;H=bg.height=innerHeight}
+sizeBG();addEventListener('resize',sizeBG);
+addEventListener('pointermove',e=>{mx=e.clientX/innerWidth;my=e.clientY/innerHeight});
+const stars = Array.from({length:90},()=>({x:Math.random(),y:Math.random(),z:Math.random()*.8+.2,tw:Math.random()*Math.PI*2}));
+(function bgLoop(t){
+  bctx.clearRect(0,0,W,H);
+  for(const s of stars){
+    const px=(s.x+(mx-.5)*.03*s.z)*W, py=(s.y+(my-.5)*.03*s.z)*H;
+    const a=.3+.35*Math.sin(t*.001+s.tw);
+    bctx.beginPath();bctx.arc(px,py,s.z*2.2,0,7);
+    bctx.fillStyle=`hsla(${(s.tw*130)%360},75%,55%,${a*s.z*.8})`;bctx.fill();
+  }
+  requestAnimationFrame(bgLoop);
+})(0);
+
+/* ============================================================
+   MEASUREMENT ENGINE (real, via Cloudflare speed endpoints)
+   ============================================================ */
+const CF='https://speed.cloudflare.com';
+const R={latency:0,jitter:0,download:0,upload:0,samples:[],stability:0,loss:0,simulated:false};
+
+async function pingOnce(){
+  const t0=performance.now();
+  await fetch(`${CF}/__down?bytes=0&_=${Math.random()}`,{cache:'no-store'});
+  return performance.now()-t0;
+}
+async function measureLatency(onTick){
+  const pings=[];
+  await pingOnce().catch(()=>{}); // warm connection
+  for(let i=0;i<10;i++){
+    try{const p=await pingOnce();pings.push(p);onTick(Math.min(...pings),i/10)}
+    catch(e){R.loss++}
+    await new Promise(r=>setTimeout(r,90));
+  }
+  if(!pings.length)throw new Error('offline');
+  pings.sort((a,b)=>a-b);
+  R.latency=pings[0];
+  const diffs=pings.slice(1).map((p,i)=>Math.abs(p-pings[i]));
+  R.jitter=diffs.reduce((a,b)=>a+b,0)/Math.max(1,diffs.length);
+  R.samples=pings;
+  const mean=pings.reduce((a,b)=>a+b,0)/pings.length;
+  const sd=Math.sqrt(pings.reduce((a,p)=>a+(p-mean)**2,0)/pings.length);
+  R.stability=clamp(100-(sd/mean)*120,20,100);
+}
+async function streamDown(bytes,onBytes){
+  const res=await fetch(`${CF}/__down?bytes=${bytes}&_=${Math.random()}`,{cache:'no-store'});
+  const reader=res.body.getReader();
+  while(true){const {done,value}=await reader.read();if(done)break;onBytes(value.length)}
+}
+async function measureDownload(onTick){
+  // warm-up single stream
+  let got=0,t0=performance.now(),best=0;
+  await streamDown(2e6,n=>{got+=n;
+    const s=(performance.now()-t0)/1000;
+    if(s>.15){best=Math.max(best,(got*8/1e6)/s);onTick(best)}});
+  // saturate: 4 parallel streams, aggregate throughput (like real speed tests)
+  const perStream=best>150?25e6:best>40?12e6:5e6;
+  got=0;t0=performance.now();
+  let agg=0;
+  const tick=()=>{const s=(performance.now()-t0)/1000;
+    if(s>.3){agg=(got*8/1e6)/s;onTick(Math.max(best,agg))}};
+  await Promise.all([0,1,2,3].map(()=>streamDown(perStream,n=>{got+=n;tick()})));
+  const s=(performance.now()-t0)/1000;
+  R.download=Math.max(best,(got*8/1e6)/s);
+}
+async function upOnce(bytes){
+  const blob=new Blob([new Uint8Array(bytes)]);
+  const t0=performance.now();
+  await fetch(`${CF}/__up`,{method:'POST',body:blob});
+  return (bytes*8/1e6)/((performance.now()-t0)/1000);
+}
+async function measureUpload(onTick){
+  let best=0;
+  for(const bytes of [1e6,4e6]){best=Math.max(best,await upOnce(bytes));onTick(best)}
+  if(best>30){ // fast line: bigger payload + 2 parallel for accuracy
+    const t0=performance.now(),bytes=8e6;
+    await Promise.all([upOnce(bytes),upOnce(bytes)]).then(()=>{
+      best=Math.max(best,(bytes*2*8/1e6)/((performance.now()-t0)/1000));
+    });
+    onTick(best);
+  }
+  R.upload=best;
+}
+function simulate(){ // graceful fallback if endpoints unreachable
+  R.simulated=true;
+  R.latency=14+Math.random()*20; R.jitter=1+Math.random()*4;
+  R.download=80+Math.random()*300; R.upload=30+Math.random()*80;
+  R.stability=80+Math.random()*18; R.loss=Math.random()<.8?0:1;
+  R.samples=Array.from({length:10},()=>R.latency+Math.random()*R.jitter*3);
+}
+
+/* ============================================================
+   TEST VISUALIZATION — light particles travelling
+   ============================================================ */
+const tv=$('#testViz'), tctx=tv.getContext('2d');
+let tvW,tvH,vizMode='idle',vizRAF;
+function sizeTV(){const r=tv.getBoundingClientRect();tv.width=tvW=r.width*devicePixelRatio;tv.height=tvH=r.height*devicePixelRatio;tctx.scale(1,1)}
+const parts=[];
+function spawn(n,mode){
+  for(let i=0;i<n;i++)parts.push({
+    p:Math.random(), speed:.004+Math.random()*.008,
+    lane:Math.random(), size:1.5+Math.random()*2.5,
+    hue:mode==='download'?150:mode==='upload'?270:200,
+    alive:true, mode
+  });
+}
+function vizLoop(){
+  tctx.clearRect(0,0,tvW,tvH);
+  const cx=tvW/2, cy=tvH/2;
+  // endpoints
+  const drawNode=(x,label,glow)=>{
+    tctx.beginPath();tctx.arc(x,cy,14*devicePixelRatio,0,7);
+    tctx.fillStyle=glow;tctx.shadowColor=glow;tctx.shadowBlur=30;tctx.fill();tctx.shadowBlur=0;
+    tctx.fillStyle='rgba(23,19,11,.65)';
+    tctx.font=`${12*devicePixelRatio}px Inter`;tctx.textAlign='center';
+    tctx.fillText(label,x,cy+38*devicePixelRatio);
+  };
+  const x0=tvW*.12,x1=tvW*.88;
+  // fibre line
+  const g=tctx.createLinearGradient(x0,0,x1,0);
+  g.addColorStop(0,'rgba(139,92,246,.35)');g.addColorStop(.5,'rgba(56,189,248,.35)');g.addColorStop(1,'rgba(52,211,153,.35)');
+  tctx.strokeStyle=g;tctx.lineWidth=2*devicePixelRatio;
+  tctx.beginPath();tctx.moveTo(x0,cy);tctx.lineTo(x1,cy);tctx.stroke();
+  drawNode(x0,'You','#8b5cf6');drawNode(x1,vizMode==='latency'||vizMode==='jitter'?'Server':'Internet','#38bdf8');
+  for(let i=parts.length-1;i>=0;i--){
+    const pt=parts[i];
+    pt.p+=pt.speed*(vizMode==='download'||vizMode==='upload'?2.2:1);
+    if(pt.p>1){if(pt.mode==='latency'&&!pt.back){pt.back=true;pt.p=0}else{parts.splice(i,1);continue}}
+    const dir=(pt.mode==='upload'||pt.back)? -1:1;
+    const prog=dir===1?pt.p:1-pt.p;
+    const x=lerp(x0,x1,prog);
+    const wobble=Math.sin(pt.p*12+pt.lane*9)*(pt.mode==='jitter'?26:8)*devicePixelRatio;
+    const y=cy+(pt.lane-.5)*60*devicePixelRatio+wobble;
+    tctx.beginPath();tctx.arc(x,y,pt.size*devicePixelRatio,0,7);
+    tctx.fillStyle=`hsla(${pt.hue},85%,68%,.9)`;
+    tctx.shadowColor=`hsla(${pt.hue},90%,60%,1)`;tctx.shadowBlur=16;tctx.fill();tctx.shadowBlur=0;
+    // trail
+    tctx.beginPath();tctx.arc(x-dir*14*devicePixelRatio,y,pt.size*.55*devicePixelRatio,0,7);
+    tctx.fillStyle=`hsla(${pt.hue},85%,68%,.28)`;tctx.fill();
+  }
+  if(vizMode!=='idle'&&parts.length<70)spawn(2,vizMode);
+  vizRAF=requestAnimationFrame(vizLoop);
+}
+
+/* ============================================================
+   TEST FLOW
+   ============================================================ */
+const stageTitles={
+  latency:['Listening to your <em>heartbeat…</em>','We send a tiny packet and time its round trip.'],
+  jitter:['Checking the <em>rhythm…</em>','Consistent timing matters as much as speed.'],
+  download:['Opening the <em>floodgates…</em>','Pulling real data down your line.'],
+  upload:['Pushing <em>back…</em>','Sending data up — the forgotten half.']
+};
+function setStep(name,state){
+  $$('.step-pill').forEach(p=>{
+    if(p.dataset.step===name)p.classList.add(state==='on'?'on':'done'),state==='done'&&p.classList.remove('on');
+  });
+}
+function setStage(name){
+  vizMode=name;parts.length=0;
+  $('#stageTitle').innerHTML=stageTitles[name][0];
+  $('#stageLabel').textContent=stageTitles[name][1];
+  setStep(name,'on');
+}
+async function runTest(){
+  $('#hero').style.display='none';$('#dash').classList.remove('active');
+  const st=$('#stage');st.classList.add('active');
+  $$('.step-pill').forEach(p=>p.classList.remove('on','done'));
+  R.loss=0;R.simulated=false;
+  sizeTV();cancelAnimationFrame(vizRAF);vizLoop();
+  const live=$('#liveVal');
+  try{
+    setStage('latency');
+    await measureLatency(v=>live.innerHTML=`${fmt(v)}<span class="unit">ms</span>`);
+    setStep('latency','done');
+    setStage('jitter');
+    live.innerHTML=`${fmt(R.jitter)}<span class="unit">ms jitter</span>`;
+    await new Promise(r=>setTimeout(r,1800));
+    setStep('jitter','done');
+    setStage('download');
+    await measureDownload(v=>live.innerHTML=`${fmt(v)}<span class="unit">Mbps</span>`);
+    setStep('download','done');
+    setStage('upload');
+    await measureUpload(v=>live.innerHTML=`${fmt(v)}<span class="unit">Mbps</span>`);
+    setStep('upload','done');
+  }catch(e){
+    console.error('Measurement failed:',e);
+    R.reason=location.protocol==='file:'
+      ?'opened as a local file — browsers block network tests from file://. Serve over http(s) for real data.'
+      :(e.message||'network error');
+    simulate();
+    ['latency','jitter','download','upload'].forEach(s=>setStep(s,'done'));
+  }
+  await new Promise(r=>setTimeout(r,700));
+  cancelAnimationFrame(vizRAF);vizMode='idle';
+  st.classList.remove('active');
+  buildDashboard();
+}
+$('#startBtn').addEventListener('click',runTest);
+$('#againBtn')?.addEventListener('click',runTest);
+
+/* card mouse-follow glow */
+addEventListener('pointermove',e=>{
+  const c=e.target.closest?.('.card'); if(!c)return;
+  const r=c.getBoundingClientRect();
+  c.style.setProperty('--mx',(e.clientX-r.left)+'px');
+  c.style.setProperty('--my',(e.clientY-r.top)+'px');
+});
+
+/* ============================================================
+   SCORING / GRADES / PERSONALITY
+   ============================================================ */
+function grade(metric,v){
+  const bands={
+    latency:[[20,'Excellent','green'],[50,'Good','blue'],[100,'Fair','amber'],[1e9,'Poor','red']],
+    jitter:[[5,'Excellent','green'],[15,'Good','blue'],[30,'Fair','amber'],[1e9,'Poor','red']],
+    download:[[25,'Poor','red',1],[100,'Good','blue'],[1e9,'Excellent','green']],
+    upload:[[10,'Poor','red',1],[40,'Good','blue'],[1e9,'Excellent','green']],
+    stability:[[60,'Shaky','red',1],[85,'Decent','amber'],[1e9,'Rock solid','green']],
+    loss:[[0.5,'Perfect','green'],[2,'Minor','amber'],[1e9,'Lossy','red']]
+  }[metric];
+  for(const [lim,label,color,inv] of bands){ if(v<lim)return {label,color}; }
+  return bands[bands.length-1].slice(1);
+}
+const COLORS={green:'#00a05c',blue:'#0084ff',amber:'#e88b00',red:'#e5484d',purple:'#6d4aff'};
+function score(){
+  const dl=clamp(R.download/300,0,1)*35;
+  const ul=clamp(R.upload/100,0,1)*20;
+  const lat=clamp(1-R.latency/150,0,1)*25;
+  const jit=clamp(1-R.jitter/40,0,1)*10;
+  const stab=(R.stability/100)*10;
+  return Math.round(dl+ul+lat+jit+stab);
+}
+function personality(){
+  const s=score();
+  if(R.latency<20&&R.download>200)return['🚀','The Rocket','Blisteringly fast and instantly responsive. Your internet doesn’t wait — it launches.'];
+  if(R.latency<15)return['⚡','The Lightning','Reactions faster than a blink. Competitive gamers dream of this latency.'];
+  if(R.jitter>15||R.stability<70)return['🎢','The Rollercoaster','Fast one second, wobbly the next. Thrilling — unless you’re on a video call.'];
+  if(R.download<25)return['🐢','The Turtle','Slow and steady. It gets there… eventually. Streaming in 4K is a fantasy for now.'];
+  if(R.loss>1)return['👻','The Ghost','Some of your packets simply vanish into the void. Spooky, and worth investigating.'];
+  if(s>75)return['🚄','The Bullet Train','Smooth, fast, punctual. Everything arrives exactly when it should.'];
+  if(R.latency>80)return['🛰️','The Satellite','Plenty of bandwidth, but signals take the scenic route through the sky.'];
+  if(R.stability>90)return['🌊','The Ocean','Deep, calm, endlessly steady. Not the flashiest — but utterly dependable.'];
+  return['⛰️','The Mountain','Solid and unshakeable. A dependable connection you can build a life on.'];
+}
+
+/* ============================================================
+   METRIC CARD ANIMATIONS (each card = tiny canvas scene)
+   ============================================================ */
+const cardAnims=[];
+function makeCardCanvas(cv,draw){
+  const ctx=cv.getContext('2d');
+  const fit=()=>{const r=cv.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=r.height*devicePixelRatio};
+  fit();addEventListener('resize',fit);
+  cardAnims.push(t=>draw(ctx,cv.width,cv.height,t));
+}
+(function cardLoop(t){cardAnims.forEach(f=>f(t));requestAnimationFrame(cardLoop)})(0);
+
+/* canvas minion: tiny goggle-blob with running legs */
+function mn(ctx,x,y,r,t,o={}){
+  const leg=Math.sin(t*.02+(o.ph||0))*(o.run===false?.12:.55);
+  ctx.save();ctx.translate(x,y);
+  if(o.rot)ctx.rotate(o.rot);
+  if(o.flip)ctx.scale(-1,1);
+  if(o.alpha!=null)ctx.globalAlpha=o.alpha;
+  ctx.strokeStyle='#17130b';ctx.lineCap='round';
+  // legs
+  ctx.lineWidth=r*.22;
+  ctx.beginPath();ctx.moveTo(-r*.4,r*.85);ctx.lineTo(-r*.4+leg*r,r*1.55);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(r*.4,r*.85);ctx.lineTo(r*.4-leg*r,r*1.55);ctx.stroke();
+  // arm
+  ctx.beginPath();ctx.moveTo(r*.8,-r*.1);ctx.lineTo(r*1.3,-r*.1-leg*r*.7);ctx.stroke();
+  // body
+  ctx.lineWidth=r*.2;
+  ctx.beginPath();ctx.ellipse(0,0,r,r*1.15,0,0,7);
+  ctx.fillStyle=o.c||'#ffd54d';ctx.fill();ctx.stroke();
+  // goggle + pupil (blinks)
+  ctx.lineWidth=r*.16;
+  ctx.beginPath();ctx.arc(r*.3,-r*.32,r*.45,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.stroke();
+  const blink=Math.sin(t*.0011+(o.ph||0))>.985?.15:1;
+  ctx.save();ctx.translate(r*.4,-r*.32);ctx.scale(1,blink);
+  ctx.beginPath();ctx.arc(0,0,r*.18,0,7);ctx.fillStyle='#17130b';ctx.fill();ctx.restore();
+  // mouth
+  ctx.lineWidth=r*.14;
+  ctx.beginPath();ctx.moveTo(0,r*.5);
+  o.sad?ctx.quadraticCurveTo(r*.35,r*.3,r*.7,r*.55):ctx.quadraticCurveTo(r*.35,r*.75,r*.7,r*.45);
+  ctx.stroke();
+  ctx.restore();
+}
+const INK='#17130b';
+const SCENES={
+  download(ctx,w,h,t){ // minions raining down from a cloud
+    ctx.clearRect(0,0,w,h);
+    const d=devicePixelRatio,r=6.5*d;
+    // cloud
+    ctx.fillStyle='#fffdf6';ctx.strokeStyle=INK;ctx.lineWidth=1.6*d;
+    [[w*.38,10*d,11*d],[w*.5,7*d,14*d],[w*.63,10*d,11*d]].forEach(([cx,cy,cr])=>{
+      ctx.beginPath();ctx.arc(cx,cy,cr,0,7);ctx.fill();ctx.stroke();
+    });
+    const n=clamp(Math.round(R.download/40)+3,3,8);
+    const v=clamp(R.download/300,.25,1)*.09;
+    for(let i=0;i<n;i++){
+      const x=w*.15+((i*137)%70)/100*w+Math.sin(t*.002+i*3)*6*d;
+      const y=((t*v*d)+i*991)%(h+40*1)-20;
+      mn(ctx,x,y,r,t,{ph:i*2,rot:Math.sin(t*.003+i)*.25,c:'#ffd54d'});
+    }
+  },
+  upload(ctx,w,h,t){ // minions getting sucked into a machine
+    ctx.clearRect(0,0,w,h);
+    const d=devicePixelRatio,cx=w*.82,cy=h*.5;
+    // machine
+    ctx.fillStyle='#e4d9ff';ctx.strokeStyle=INK;ctx.lineWidth=2*d;
+    ctx.beginPath();ctx.roundRect(cx-14*d,cy-26*d,34*d,52*d,6*d);ctx.fill();ctx.stroke();
+    // funnel mouth
+    ctx.fillStyle='#17130b';
+    ctx.beginPath();ctx.ellipse(cx-14*d,cy,5*d,13*d,0,0,7);ctx.fill();
+    // blinking light
+    ctx.beginPath();ctx.arc(cx+8*d,cy-18*d,3*d,0,7);
+    ctx.fillStyle=Math.sin(t*.006)>0?'#00a05c':'#e5484d';ctx.fill();ctx.stroke();
+    const n=5, sp=clamp(R.upload/100,.25,1)*.00035;
+    for(let i=0;i<n;i++){
+      const p=((t*sp)+i/n)%1;
+      const x=lerp(-15*d,cx-16*d,Math.pow(p,1.15));
+      const y=cy+Math.sin(i*4.1)*(h*.3)*(1-p);
+      const r=6.5*d*(1-p*.6);
+      mn(ctx,x,y,r,t,{ph:i*3,rot:p*.7,c:'#ffd54d',alpha:p>.94?(1-p)/.06:1});
+    }
+  },
+  latency(ctx,w,h,t){ // one minion sprinting there and back
+    ctx.clearRect(0,0,w,h);
+    const d=devicePixelRatio,cy=h*.62,x0=w*.12,x1=w*.88;
+    ctx.strokeStyle='rgba(23,19,11,.35)';ctx.lineWidth=d;ctx.setLineDash([2*d,6*d]);
+    ctx.beginPath();ctx.moveTo(x0,cy+9*d);ctx.lineTo(x1,cy+9*d);ctx.stroke();ctx.setLineDash([]);
+    // home + server posts
+    ctx.strokeStyle=INK;ctx.lineWidth=1.6*d;
+    ctx.fillStyle='#cfe4ff';ctx.beginPath();ctx.roundRect(x0-9*d,cy-14*d,14*d,24*d,3*d);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#d2f5d9';ctx.beginPath();ctx.roundRect(x1-5*d,cy-14*d,14*d,24*d,3*d);ctx.fill();ctx.stroke();
+    const speed=clamp(60/Math.max(8,R.latency),.4,2);
+    const ph=(t*.001*speed)%2, back=ph>1, p=back?2-ph:ph;
+    const x=lerp(x0+14*d,x1-14*d,p);
+    mn(ctx,x,cy-4*d,6.5*d,t,{flip:back,c:'#ffd54d'});
+    // little dust puffs
+    ctx.fillStyle='rgba(23,19,11,.15)';
+    ctx.beginPath();ctx.arc(x+(back?12:-12)*d,cy+8*d,(2+Math.sin(t*.02)*1)*d,0,7);ctx.fill();
+  },
+  jitter(ctx,w,h,t){ // marching band losing its rhythm
+    ctx.clearRect(0,0,w,h);
+    const d=devicePixelRatio,cy=h*.55,uneven=clamp(R.jitter/20,.15,1)*(Math.sin(t*.0009)+1)/2;
+    for(let i=0;i<6;i++){
+      const base=(t*.028*d+i*(w/6))%(w+26*d)-13*d;
+      const jig=Math.sin(i*9.7+t*.004)*uneven*w*.05;
+      mn(ctx,base+jig,cy+Math.sin(i*5+t*.005)*uneven*8*d,5.5*d,t,{ph:i*1.7,c:uneven>.5&&i%2?'#ffb84d':'#ffd54d',sad:uneven>.7&&i%3===0});
+    }
+  },
+  stability(ctx,w,h,t){ // minions surfing the wave
+    ctx.clearRect(0,0,w,h);
+    const d=devicePixelRatio;
+    const amp=(1-R.stability/100)*h*.28+h*.06;
+    const wave=x=>h*.62+Math.sin(x*.02+t*.002)*amp+Math.sin(x*.043-t*.0031)*amp*.5;
+    ctx.beginPath();ctx.moveTo(0,h);
+    for(let x=0;x<=w;x+=4)ctx.lineTo(x,wave(x));
+    ctx.lineTo(w,h);ctx.closePath();
+    const g=ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,'rgba(0,132,255,.45)');g.addColorStop(1,'rgba(109,74,255,.12)');
+    ctx.fillStyle=g;ctx.fill();
+    for(let i=0;i<3;i++){
+      const x=w*(.2+i*.3)+Math.sin(t*.001+i)*10*d;
+      const y=wave(x)-7*d;
+      const slope=Math.atan2(wave(x+6)-wave(x-6),12);
+      mn(ctx,x,y,5.5*d,t,{ph:i*2.2,rot:slope,run:false,c:'#ffd54d',sad:R.stability<60});
+    }
+  },
+  loss(ctx,w,h,t){ // parade over a hole — some fall in
+    ctx.clearRect(0,0,w,h);
+    const d=devicePixelRatio,cy=h*.55,gapA=w*.58,gapB=w*.72;
+    // floor with gap
+    ctx.strokeStyle=INK;ctx.lineWidth=2*d;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(w*.02,cy+12*d);ctx.lineTo(gapA,cy+12*d);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(gapB,cy+12*d);ctx.lineTo(w*.98,cy+12*d);ctx.stroke();
+    for(let i=0;i<5;i++){
+      const x=(t*.03*d+i*(w/5))%(w+26*d)-13*d;
+      const doomed=R.loss>0&&i===2;
+      let y=cy,rot=0,alpha=1,sad=false;
+      if(x>gapA&&x<gapB){
+        if(doomed){const fp=(x-gapA)/(gapB-gapA);y=cy+fp*h*.5;rot=fp*1.6;alpha=1-fp*.8;sad=true}
+        else{const jp=(x-gapA)/(gapB-gapA);y=cy-Math.sin(jp*Math.PI)*16*d} // hop!
+      }
+      mn(ctx,x,y,5.5*d,t,{ph:i*1.9,rot,alpha,sad,c:'#ffd54d'});
+    }
+  }
+};
+
+/* ============================================================
+   METRIC DEFINITIONS + EDUCATION CONTENT
+   ============================================================ */
+function METRICS(){return[
+ {id:'download',name:'Download',val:`${fmt(R.download)}`,unit:'Mbps',glow:'green',
+  desc:'How fast the internet flows to you — streams, pages, games.',
+  edu:{what:'Download speed is how quickly data travels from the internet to your device, measured in megabits per second. Every video frame, web page and game update rides this lane.',
+   why:'It sets the ceiling for everything you consume. 4K Netflix wants ~25 Mbps per screen; big game downloads devour hundreds.',
+   real:'At your speed, a 5 GB game download takes about '+Math.max(1,Math.round(5*8000/Math.max(1,R.download)/60))+' minutes.',
+   tips:'Use 5 GHz Wi-Fi or ethernet, move closer to the router, pause background cloud syncs, or upgrade your plan if you routinely hit the ceiling.',
+   apps:[['4K Streaming',R.download/25],['Game downloads',R.download/100],['Web browsing',R.download/10],['Cloud backup',R.download/50]]}},
+ {id:'upload',name:'Upload',val:`${fmt(R.upload)}`,unit:'Mbps',glow:'purple',
+  desc:'Your voice to the world — calls, streams, backups.',
+  edu:{what:'Upload speed is how quickly data leaves your device — your camera on Zoom, your gameplay on Twitch, your photos to the cloud.',
+   why:'Video calls need 3–5 Mbps of clean upload per participant. Live streaming in HD wants 6+. It’s the half ISPs quietly skimp on.',
+   real:'Uploading a 500 MB video would take you roughly '+Math.max(1,Math.round(500*8/Math.max(1,R.upload)/60))+' minutes.',
+   tips:'Close cloud-sync apps during calls, prefer wired connections when streaming, and check if your ISP offers symmetric (fibre) plans.',
+   apps:[['Zoom / Meet',R.upload/5],['Live streaming',R.upload/8],['Cloud photos',R.upload/20],['Sending files',R.upload/25]]}},
+ {id:'latency',name:'Latency',val:`${fmt(R.latency)}`,unit:'ms',glow:'blue',
+  desc:'The round-trip time of a single packet. Your internet’s reflexes.',
+  edu:{what:'Latency (ping) is the time one packet needs to travel from you to a server and back. It’s pure distance + routing, independent of bandwidth.',
+   why:'Below ~20 ms feels telepathic. Above 100 ms, games feel laggy, calls talk over each other, and remote desktops feel like molasses.',
+   real:'Your packets complete a full round trip in '+fmt(R.latency)+' ms — light itself could cross about '+Math.round(R.latency*150)+' km in that time.',
+   tips:'Wired beats wireless. Pick nearby game servers. Avoid VPNs routed through far-away countries. Bufferbloat under load is a common hidden culprit.',
+   apps:[['Competitive gaming',30/Math.max(5,R.latency)],['Video calls',80/Math.max(5,R.latency)],['Remote desktop',60/Math.max(5,R.latency)],['Streaming',200/Math.max(5,R.latency)]]}},
+ {id:'jitter',name:'Jitter',val:`${fmt(R.jitter)}`,unit:'ms',glow:'amber',
+  desc:'The wobble between packets. Rhythm matters as much as speed.',
+  edu:{what:'Jitter is the variation in latency between consecutive packets. Perfect internet delivers packets like a metronome; jittery internet delivers them like a drunk drummer.',
+   why:'Real-time audio and video buffer against jitter — high jitter means robotic voices, frozen frames and rubber-banding in games.',
+   real:'Your packets arrive within ±'+fmt(R.jitter)+' ms of each other. Under 5 ms is studio-grade; over 30 ms is call-breaking.',
+   tips:'Reduce Wi-Fi congestion (neighbours share your channel), enable router QoS for calls/games, and avoid saturating your line while on calls.',
+   apps:[['VoIP calls',10/Math.max(1,R.jitter)],['Gaming',8/Math.max(1,R.jitter)],['Live video',15/Math.max(1,R.jitter)],['Music streaming',40/Math.max(1,R.jitter)]]}},
+ {id:'stability',name:'Stability',val:`${fmt(R.stability,0)}`,unit:'/100',glow:'blue',
+  desc:'How consistent your connection stayed across the whole test.',
+  edu:{what:'Stability measures how consistent your latency samples were — the standard deviation of your connection’s heartbeat, normalized to a 0–100 score.',
+   why:'A fast-but-unstable line feels worse than a modest steady one. Consistency is what makes internet feel “invisible”.',
+   real:'Your samples varied like a '+(R.stability>85?'calm lake — beautifully steady.':R.stability>60?'breezy sea — mostly fine, occasional chop.':'stormy ocean — expect hiccups in calls and games.'),
+   tips:'Interference, overloaded routers and ISP congestion at peak hours are the usual suspects. Test at different times of day to find patterns.',
+   apps:[['Long video calls',R.stability/80],['Cloud gaming',R.stability/90],['Trading / RDP',R.stability/85],['Downloads',R.stability/50]]}},
+ {id:'loss',name:'Packet Loss',val:`${fmt(R.loss,0)}`,unit:'%',glow:'green',
+  desc:'Packets that vanished. Every one must be re-sent.',
+  edu:{what:'Packet loss is the percentage of packets that never arrive. TCP re-requests them (slow), while real-time apps simply skip them (glitchy).',
+   why:'Even 1–2% loss makes calls stutter and games teleport. 0% is the only truly comfortable number.',
+   real:R.loss>0?'We saw '+fmt(R.loss,0)+' request(s) fail during testing — worth watching.':'Every single test packet made it home. Flawless delivery.',
+   tips:'Check cables and connectors first, then Wi-Fi signal strength. Persistent loss on ethernet usually means an ISP line fault — call them with this data.',
+   apps:[['Everything real-time',R.loss>1?.4:1.2],['Streaming',R.loss>2?.5:1.2],['Browsing',1.1],['Gaming',R.loss>0.5?.6:1.2]]}}
+];}
+
+/* ============================================================
+   DASHBOARD BUILD
+   ============================================================ */
+function countUp(el,to,ms=1600,dec=0){
+  const t0=performance.now();
+  (function step(t){
+    const p=clamp((t-t0)/ms,0,1), e=1-Math.pow(1-p,4);
+    el.textContent=(to*e).toFixed(dec);
+    if(p<1)requestAnimationFrame(step);
+  })(t0);
+}
+
+function minion(color,dur,begin,path,flip){
+  return`<g class="minion">
+    <animateMotion dur="${dur}s" begin="${begin}s" repeatCount="indefinite" path="${path}"/>
+    <g class="body" transform="scale(${flip?-1:1},1)">
+      <line class="leg1" x1="-4" y1="10" x2="-5" y2="19" stroke="#17130b" stroke-width="2.5" stroke-linecap="round"/>
+      <line class="leg2" x1="4" y1="10" x2="5" y2="19" stroke="#17130b" stroke-width="2.5" stroke-linecap="round"/>
+      <line class="arm" x1="8" y1="-2" x2="14" y2="4" stroke="#17130b" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="0" cy="0" rx="11" ry="13" fill="${color}" stroke="#17130b" stroke-width="2.5"/>
+      <circle cx="4" cy="-4" r="5.5" fill="#fff" stroke="#17130b" stroke-width="2"/>
+      <circle class="pupil" cx="5.5" cy="-4" r="2.2" fill="#17130b"/>
+      <path d="M 0 5 Q 4 8 8 5" stroke="#17130b" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <rect x="-12" y="-3" width="6" height="7" rx="2" fill="#8b5a2b" stroke="#17130b" stroke-width="1.5"/>
+    </g>
+  </g>`;
+}
+function buildJourney(){
+  const svg=$('#journeySvg');
+  const nodes=[['💻','Laptop',90],['📡','Router',315],['🏢','ISP',550],['🌐','Internet',785],['🗄️','Server',1010]];
+  const fast=R.latency<30, story=[
+    `Got your click!! RUN RUN RUN`,
+    `Router says: "through you go, tiny one"`,
+    fast?`ISP highway — WHEEE, no traffic!`:`ISP highway… bit of a jam today`,
+    `Swimming across the internet 🌊`,
+    `Server replied in ${fmt(R.latency)} ms. Nailed it 💪`
+  ];
+  const bubbleFill=['#fffdf6','#fffdf6','#fffdf6','#fffdf6','#fffdf6'];
+  let ns='';
+  nodes.forEach(([ic,label,x],i)=>{
+    ns+=`<g style="opacity:0;animation:rise .9s var(--ease) ${.2+i*.18}s forwards">
+      <circle cx="${x}" cy="150" r="32" fill="#fffdf6" stroke="#17130b" stroke-width="2.5"/>
+      <text x="${x}" y="160" text-anchor="middle" font-size="26">${ic}</text>
+      <text x="${x}" y="215" text-anchor="middle" font-size="14" font-weight="700" fill="rgba(23,19,11,.65)" font-family="Bricolage Grotesque">${label}</text>
+    </g>
+    <g class="bub" style="animation-delay:${i*3.2}s">
+      <rect x="${x-95}" y="38" width="190" height="40" rx="12" fill="${bubbleFill[i]}" stroke="#17130b" stroke-width="2"/>
+      <path d="M ${x-6} 78 L ${x} 92 L ${x+8} 78 Z" fill="${bubbleFill[i]}" stroke="#17130b" stroke-width="2"/>
+      <text x="${x}" y="63" text-anchor="middle" font-size="12.5" font-weight="600" fill="#17130b" font-family="Bricolage Grotesque">${story[i]}</text>
+    </g>`;
+  });
+  const dur=clamp(R.latency/12,3.5,9);
+  const cols=['#ffd54d','#ff8a5c','#7ec8ff','#b6e86e'];
+  svg.innerHTML=`
+    <path d="M 122 150 H 1010" stroke="#17130b" stroke-width="2.5" stroke-dasharray="2 10" fill="none" opacity=".5" stroke-linecap="round"/>
+    ${ns}
+    ${cols.map((c,i)=>minion(c,dur*(1+i*.13),i*1.1,'M 122 128 H 1010',false)).join('')}
+    ${minion('#f2a7ff',dur*1.4,1.8,'M 1010 128 H 122',true)}`;
+}
+
+function buildCards(){
+  const grid=$('#metricGrid');grid.innerHTML='';cardAnims.length=0;
+  METRICS().forEach((m,i)=>{
+    const g=grade(m.id,parseFloat(m.val));
+    const col=COLORS[g.color]||COLORS.blue;
+    const card=document.createElement('div');
+    card.className='card mini';
+    card.style.setProperty('--glow',col+'22');
+    card.style.setProperty('--glowStrong',col+'66');
+    card.style.transitionDelay=(i*80)+'ms';
+    card.innerHTML=`
+      <div class="head"><h4>${m.name}</h4>
+      <span class="grade" style="color:${col};background:${col}1c;border:1px solid ${col}44">${g.label}</span></div>
+      <div class="val"><span class="n">0</span><span class="unit"> ${m.unit}</span></div>
+      <div class="desc">${m.desc}</div>
+      <canvas></canvas>
+      <span class="learn">CLICK TO LEARN ↗</span>`;
+    grid.appendChild(card);
+    makeCardCanvas(card.querySelector('canvas'),SCENES[m.id]);
+    card.addEventListener('click',()=>openModal(m,g,col));
+    setTimeout(()=>countUp(card.querySelector('.n'),parseFloat(m.val),1600,m.val.includes('.')?1:0),400+i*120);
+  });
+}
+
+function buildReadiness(){
+  const apps=[
+    ['🎬','Netflix 4K',R.download/25],['🎮','Gaming',40/Math.max(8,R.latency)],
+    ['📹','Zoom',Math.min(R.upload/4,R.download/4,25/Math.max(3,R.jitter))],
+    ['▶️','YouTube',R.download/20],['🎵','Spotify',R.download/2],
+    ['🗣️','Google Meet',Math.min(R.upload/4,30/Math.max(3,R.jitter))],
+    ['☁️','Cloud Backup',R.upload/20],['🕹️','PS5 / Xbox',R.download/50],
+    ['🚂','Steam',R.download/80],['💼','Teams',Math.min(R.upload/4,R.download/8)],
+    ['📺','OBS Stream',R.upload/8],['🖥️','Remote Desktop',50/Math.max(8,R.latency)]
+  ];
+  const g=$('#readyGrid');g.innerHTML='';
+  apps.forEach(([ic,name,ratio],i)=>{
+    const pct=clamp(ratio,0,1.4)/1.4*100;
+    const [label,col]=ratio>=1?['Perfect',COLORS.green]:ratio>=.6?['Good',COLORS.blue]:ratio>=.35?['Usable',COLORS.amber]:['Struggles',COLORS.red];
+    const d=document.createElement('div');d.className='ready';
+    d.innerHTML=`<span class="ic">${ic}</span><b>${name}</b>
+      <span class="verdict" style="color:${col};background:${col}1a">${label}</span>
+      <div class="bar"><i style="background:${col}"></i></div>`;
+    g.appendChild(d);
+    setTimeout(()=>d.querySelector('i').style.width=pct+'%',500+i*90);
+  });
+}
+
+function buildDiagnosis(){
+  const d=$('#diagCard');d.innerHTML='';
+  const p=personality();
+  const lines=[
+    ['🔬',`We ran <b>${R.simulated?'a simulated demo (network endpoints unreachable)':'live measurements against real servers'}</b> and watched every packet.`],
+    ['⬇️',`Your download of <b>${fmt(R.download)} Mbps</b> is ${R.download>200?'exceptional — 4K on multiple screens, no sweat.':R.download>80?'comfortably fast for a modern household.':R.download>25?'workable, but heavy streaming may compete for room.':'the main bottleneck we found.'}`],
+    ['⏱️',`Latency of <b>${fmt(R.latency)} ms</b> with <b>${fmt(R.jitter)} ms</b> jitter means real-time apps feel ${R.latency<25&&R.jitter<6?'instant and glassy.':R.latency<60?'responsive with the occasional wobble.':'noticeably delayed — expect lag in games and calls.'}`],
+    ['🧬',`Stability scored <b>${fmt(R.stability,0)}/100</b>${R.loss>0?` and we observed <b>${fmt(R.loss,0)} failed request(s)</b>`:' with zero packet loss'} — ${R.stability>85&&R.loss===0?'your line has a beautifully steady heartbeat.':'some inconsistency is present; test at different hours to spot congestion patterns.'}`],
+    [p[0],`Final diagnosis: your internet is <b>${p[1]}</b>. ${p[2]}`]
+  ];
+  lines.forEach(([ic,txt],i)=>{
+    const row=document.createElement('div');row.className='diag-line';
+    row.innerHTML=`<div class="ic">${ic}</div><p>${txt}</p>`;
+    d.appendChild(row);
+  });
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{
+    if(!e.isIntersecting)return;
+    $$('.diag-line').forEach((l,i)=>setTimeout(()=>l.classList.add('show'),i*650));
+    obs.disconnect();
+  }),{threshold:.3});
+  obs.observe(d);
+}
+
+function buildStability(){
+  const cv=$('#stabCanvas'),ctx=cv.getContext('2d');
+  const fit=()=>{const r=cv.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=r.height*devicePixelRatio};
+  fit();
+  const pts=R.samples.length?R.samples:[R.latency];
+  const max=Math.max(...pts)*1.25, min=Math.min(...pts)*.8;
+  let prog=0;
+  (function draw(t){
+    fit();const w=cv.width,h=cv.height;
+    ctx.clearRect(0,0,w,h);
+    prog=Math.min(1,prog+.02);
+    const n=pts.length;
+    // gradient area
+    ctx.beginPath();
+    pts.forEach((p,i)=>{
+      const x=i/(n-1||1)*w*prog;
+      const y=h-( (p-min)/(max-min||1) )*(h*.75)-h*.12+Math.sin(t*.003+i)*2*devicePixelRatio;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle='#38bdf8';ctx.lineWidth=2.2*devicePixelRatio;
+    ctx.shadowColor='#38bdf8';ctx.shadowBlur=14;ctx.stroke();ctx.shadowBlur=0;
+    ctx.lineTo(w*prog,h);ctx.lineTo(0,h);ctx.closePath();
+    const g=ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,'rgba(56,189,248,.3)');g.addColorStop(1,'rgba(139,92,246,.02)');
+    ctx.fillStyle=g;ctx.fill();
+    // dots
+    pts.forEach((p,i)=>{
+      if(i/(n-1||1)>prog)return;
+      const x=i/(n-1||1)*w, y=h-((p-min)/(max-min||1))*(h*.75)-h*.12+Math.sin(t*.003+i)*2*devicePixelRatio;
+      ctx.beginPath();ctx.arc(x,y,2.4*devicePixelRatio,0,7);
+      ctx.fillStyle='#17130b';ctx.fill();
+    });
+    ctx.fillStyle='rgba(23,19,11,.5)';ctx.font=`${10*devicePixelRatio}px "JetBrains Mono"`;
+    ctx.fillText(fmt(Math.max(...pts))+' ms max',8*devicePixelRatio,14*devicePixelRatio);
+    ctx.fillText(fmt(Math.min(...pts))+' ms min',8*devicePixelRatio,h-8*devicePixelRatio);
+    if($('#dash').classList.contains('active'))requestAnimationFrame(draw);
+  })(0);
+}
+function buildRecs(){
+  const recs=[];
+  if(R.latency>50)recs.push(['⚡','Prefer ethernet or 5 GHz Wi-Fi — your ping has room to drop.']);
+  if(R.jitter>10)recs.push(['🎛️','Enable router QoS to smooth out jitter for calls and games.']);
+  if(R.download<50)recs.push(['⬇️','Pause background cloud syncs; consider a faster plan.']);
+  if(R.upload<10)recs.push(['⬆️','Ask your ISP about symmetric fibre — upload is your weak side.']);
+  if(R.stability<80)recs.push(['📶','Re-test at different hours to find congestion patterns.']);
+  if(R.loss>0)recs.push(['🔌','Check cables and Wi-Fi signal — packets are going missing.']);
+  if(!recs.length)recs.push(['🏆','Your connection is in great shape — no action needed.'],['📍','Keep the router central and elevated to stay this way.'],['🔄','Re-test occasionally to build your score history.']);
+  $('#recList').innerHTML=recs.slice(0,4).map(([ic,t])=>`<div class="rec-row"><div class="ric">${ic}</div><span>${t}</span></div>`).join('');
+}
+function buildHistory(s){
+  let h=[];
+  try{h=JSON.parse(localStorage.getItem('idHistory')||'[]')}catch(e){}
+  h.push({s,d:Date.now()});h=h.slice(-7);
+  try{localStorage.setItem('idHistory',JSON.stringify(h))}catch(e){}
+  const el=$('#histBars');
+  el.innerHTML=h.map(x=>{
+    const d=new Date(x.d);
+    return`<div class="hb"><b>${x.s}</b><i data-h="${x.s}"></i><span>${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span></div>`;
+  }).join('');
+  setTimeout(()=>$$('#histBars i').forEach(i=>i.style.height=(i.dataset.h*.8)+'px'),300);
+}
+function buildDashboard(){
+  const dash=$('#dash');dash.classList.add('active');
+  scrollTo({top:0});
+  const s=score();
+  countUp($('#scoreNum'),s,2200);
+  setTimeout(()=>$('#ringArc').style.strokeDashoffset=804-(804*s/100),150);
+  $('#verdictTitle').innerHTML=s>80?'Your internet is <em>thriving.</em>':s>60?'Your internet is <em>healthy.</em>':s>40?'Your internet is <em>coping.</em>':'Your internet needs <em>care.</em>';
+  $('#verdictSub').textContent=`${fmt(R.download)} Mbps down · ${fmt(R.upload)} Mbps up · ${fmt(R.latency)} ms ping${R.simulated?' · demo data':''}`;
+  $('#dashMeta').textContent=`Tested ${new Date().toLocaleString()} · ${R.simulated?'⚠ DEMO DATA: '+(R.reason||'endpoints unreachable'):'✓ live measurement via Cloudflare'} · click any metric to learn`;
+  const p=personality();
+  $('#personaEmoji').textContent=p[0];$('#personaName').textContent=p[1];$('#personaDesc').textContent=p[2];
+  buildJourney();buildCards();buildReadiness();buildDiagnosis();
+  buildStability();buildRecs();buildHistory(s);
+  const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add('in')),{threshold:.08});
+  $$('.reveal').forEach(el=>{el.classList.remove('in');io.observe(el)});
+}
+
+/* ============================================================
+   EDUCATION MODAL
+   ============================================================ */
+let mRAF;
+function openModal(m,g,col){
+  $('#mKicker').textContent='Education mode · '+g.label;
+  $('#mTitle').innerHTML=`What is <em>${m.name}?</em>`;
+  $('#mVal').textContent=`Your value: ${m.val} ${m.unit}`;
+  $('#mVal').style.color=col;
+  const stars=v=>{const n=clamp(Math.round(clamp(v,0,1.4)/1.4*5),1,5);return'★'.repeat(n)+'<span style="opacity:.25">'+'★'.repeat(5-n)+'</span>'};
+  $('#mBody').innerHTML=`
+    <div class="m-sec" style="animation-delay:.15s"><h5>Definition</h5><p>${m.edu.what}</p></div>
+    <div class="m-sec" style="animation-delay:.3s"><h5>Why it matters</h5><p>${m.edu.why}</p></div>
+    <div class="m-sec" style="animation-delay:.45s"><h5>In the real world</h5><p>${m.edu.real}</p></div>
+    <div class="m-sec" style="animation-delay:.6s"><h5>What it means for you</h5>
+      <div class="stars">${m.edu.apps.map(([n,v])=>`<div class="row"><span>${n}</span><span class="s">${stars(v)}</span></div>`).join('')}</div></div>
+    <div class="m-sec" style="animation-delay:.75s"><h5>How to improve</h5><p>${m.edu.tips}</p></div>`;
+  $('#modalBack').classList.add('open');
+  document.body.style.overflow='hidden';
+  // big animation canvas re-uses the card scene
+  const cv=$('#mAnim'),ctx=cv.getContext('2d');
+  const r=cv.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=r.height*devicePixelRatio;
+  cancelAnimationFrame(mRAF);
+  (function loop(t){SCENES[m.id](ctx,cv.width,cv.height,t);mRAF=requestAnimationFrame(loop)})(0);
+}
+function closeModal(){$('#modalBack').classList.remove('open');document.body.style.overflow='';cancelAnimationFrame(mRAF)}
+$('#mClose').addEventListener('click',closeModal);
+$('#modalBack').addEventListener('click',e=>{if(e.target.id==='modalBack')closeModal()});
+addEventListener('keydown',e=>e.key==='Escape'&&closeModal());
+
+</script>
+</body>
+</html>
