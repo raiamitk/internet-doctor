@@ -225,6 +225,8 @@ footer b{color:var(--muted)}
 .hist-bars .hb i{display:block;width:100%;border-radius:8px 8px 4px 4px;background:linear-gradient(to top,rgba(139,92,246,.5),#38bdf8,#34d399);height:0;transition:height 1.2s var(--ease);box-shadow:0 0 14px -4px rgba(56,189,248,.5)}
 .hist-bars .hb span{font-size:9.5px;color:var(--faint)}
 .hist-bars .hb b{font-size:11px;color:var(--muted)}
+.dash.pretest .tile:not(.t-score),.dash.pretest .dash-actions{display:none}
+.dash.pretest{max-width:520px}
 .dash-actions{display:flex;gap:12px}
 .again{margin:0;padding:12px 26px;font-size:14px}
 @media (max-width:1180px){
@@ -409,7 +411,7 @@ footer{color:var(--faint)}footer b{color:var(--ink)}
   </section>
 
   <!-- DASHBOARD (single-screen bento) -->
-  <section class="dash" id="dash">
+  <section class="dash pretest" id="dash">
     <div class="dash-top reveal">
       <div>
         <h2>Your Internet, <em>alive.</em></h2>
@@ -432,11 +434,11 @@ footer{color:var(--faint)}footer b{color:var(--ink)}
           </svg>
           <div class="num" id="goWrap"><b id="scoreNum">GO</b><span id="scoreLbl">Click to test</span></div>
         </div>
-        <div class="verdict-line" id="verdictTitle">Your internet is <em>healthy.</em></div>
+        <div class="verdict-line" id="verdictTitle">Ready when <em>you are.</em></div>
         <div class="meta" id="verdictSub"></div>
-        <div class="persona">
-          <div class="emoji" id="personaEmoji">🚀</div>
-          <div><h3 id="personaName">The Rocket</h3><p id="personaDesc"></p></div>
+        <div class="persona" id="personaBox" style="display:none">
+          <div class="emoji" id="personaEmoji"></div>
+          <div><h3 id="personaName"></h3><p id="personaDesc"></p></div>
         </div>
       </div>
 
@@ -671,6 +673,7 @@ function setStage(name){
 let testing=false;
 async function runTest(){
   if(testing)return;testing=true;
+  $('#dash').classList.remove('pretest');
   R.loss=0;R.simulated=false;R.reason='';
   const num=$('#scoreNum'),lbl=$('#scoreLbl'),wrap=$('#goWrap');
   wrap.classList.add('testing');
@@ -1142,6 +1145,7 @@ function buildDashboard(){
   $('#verdictSub').textContent=`${fmt(R.download)} Mbps down · ${fmt(R.upload)} Mbps up · ${fmt(R.latency)} ms ping${R.simulated?' · demo data':''}`;
   $('#dashMeta').textContent=`Tested ${new Date().toLocaleString()} · ${R.simulated?'⚠ DEMO DATA: '+(R.reason||'endpoints unreachable'):'✓ live measurement via Cloudflare'} · click any metric to learn`;
   const p=personality();
+  $('#personaBox').style.display='';
   $('#personaEmoji').textContent=p[0];$('#personaName').textContent=p[1];$('#personaDesc').textContent=p[2];
   buildJourney();buildCards();buildReadiness();buildDiagnosis();
   buildStability();buildRecs();buildHistory(s);
