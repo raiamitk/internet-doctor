@@ -793,28 +793,6 @@ function mn(ctx,x,y,r,t,o={}){
   ctx.restore();
 }
 const INK='#17130b';
-/* minion strapped to a rocket — flame points opposite direction of travel */
-function rocket(ctx,x,y,r,t,i,flameCol,flameUp,minionCol){
-  ctx.save();ctx.translate(x,y);
-  const flick=1+Math.sin(t*.05+i)*.25;
-  // flame
-  ctx.beginPath();
-  if(flameUp){ctx.moveTo(-r*.5,r*.9);ctx.lineTo(0,r*1.9*flick);ctx.lineTo(r*.5,r*.9);}
-  else{ctx.moveTo(-r*.5,-r*.9);ctx.lineTo(0,-r*1.9*flick);ctx.lineTo(r*.5,-r*.9);}
-  ctx.closePath();ctx.fillStyle=flameCol;ctx.globalAlpha=.75;ctx.fill();ctx.globalAlpha=1;
-  // body
-  ctx.fillStyle='#fffdf6';ctx.strokeStyle=INK;ctx.lineWidth=1.3*r*.2;
-  ctx.beginPath();ctx.moveTo(0,-r*1.3);ctx.lineTo(r*.55,r*.7);ctx.lineTo(r*.55,r*1.05);ctx.lineTo(-r*.55,r*1.05);ctx.lineTo(-r*.55,r*.7);ctx.closePath();
-  ctx.fill();ctx.stroke();
-  // fins
-  ctx.beginPath();ctx.moveTo(-r*.55,r*.55);ctx.lineTo(-r*1.05,r*1.15);ctx.lineTo(-r*.55,r*1.05);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.beginPath();ctx.moveTo(r*.55,r*.55);ctx.lineTo(r*1.05,r*1.15);ctx.lineTo(r*.55,r*1.05);ctx.closePath();ctx.fill();ctx.stroke();
-  // window tint (metric color)
-  ctx.beginPath();ctx.arc(0,-r*.35,r*.32,0,7);ctx.fillStyle=flameCol;ctx.globalAlpha=.4;ctx.fill();ctx.globalAlpha=1;ctx.stroke();
-  ctx.restore();
-  // minion sitting sideways (saddle-style) astride the nose, legs dangling off one side
-  mn(ctx,x,y-r*1.05,r*.72,t,{ph:i*2,run:false,rot:Math.PI/2,c:minionCol});
-}
 function impactBurst(ctx,x,y,p,col,d){ // p in [0,1] burst progress
   const fp=clamp(p,0,1);
   ctx.save();ctx.translate(x,y);ctx.globalAlpha=1-fp;ctx.strokeStyle=col;ctx.lineWidth=2*d;ctx.lineCap='round';
@@ -823,39 +801,37 @@ function impactBurst(ctx,x,y,p,col,d){ // p in [0,1] burst progress
   ctx.restore();
 }
 const SCENES={
-  download(ctx,w,h,t){ // minions on rockets falling from a cloud, colliding at the ground
+  download(ctx,w,h,t){ // minions falling, colliding at the ground
     ctx.clearRect(0,0,w,h);
     const d=devicePixelRatio,r=7*d,cx=w*.5,groundY=h*.86;
-    ctx.fillStyle='#fffdf6';ctx.strokeStyle=INK;ctx.lineWidth=1.6*d;
-    [[cx-w*.1,10*d,10*d],[cx,7*d,13*d],[cx+w*.1,10*d,10*d]].forEach(([bx,by,br])=>{
-      ctx.beginPath();ctx.arc(bx,by,br,0,7);ctx.fill();ctx.stroke();
-    });
     ctx.strokeStyle='rgba(23,19,11,.3)';ctx.lineWidth=2*d;ctx.beginPath();ctx.moveTo(0,groundY+6*d);ctx.lineTo(w,groundY+6*d);ctx.stroke();
     const n=4, speed=clamp(R.download/300,.35,2)*.00042;
+    ctx.shadowColor='#34d399';ctx.shadowBlur=8*d;
     for(let i=n-1;i>=0;i--){
       const p=((t*speed)+i/n)%1;
       const x=cx+(i-1.5)*7*d;
       const y=lerp(-r*3,groundY,p);
-      rocket(ctx,x,Math.min(y,groundY),r*(1-i*.06),t,i,'#34d399',true,'#ffd54d');
+      mn(ctx,x,Math.min(y,groundY),r*(1-i*.06),t,{ph:i*2,c:'#34d399'});
+      ctx.shadowBlur=0;
       if(p>.9)impactBurst(ctx,x,groundY+3*d,(p-.9)/.1,'#34d399',d);
+      ctx.shadowColor='#34d399';ctx.shadowBlur=8*d;
     }
+    ctx.shadowBlur=0;
   },
-  upload(ctx,w,h,t){ // minions on rockets launching upward into a cloud
+  upload(ctx,w,h,t){ // minions launching upward, off the top
     ctx.clearRect(0,0,w,h);
     const d=devicePixelRatio,r=7*d,cx=w*.5,groundY=h*.86;
-    ctx.fillStyle='#fffdf6';ctx.strokeStyle=INK;ctx.lineWidth=1.6*d;
-    [[cx-w*.1,10*d,10*d],[cx,7*d,13*d],[cx+w*.1,10*d,10*d]].forEach(([bx,by,br])=>{
-      ctx.beginPath();ctx.arc(bx,by,br,0,7);ctx.fill();ctx.stroke();
-    });
     ctx.strokeStyle='rgba(23,19,11,.3)';ctx.lineWidth=2*d;ctx.beginPath();ctx.moveTo(0,groundY+6*d);ctx.lineTo(w,groundY+6*d);ctx.stroke();
     const n=4, speed=clamp(R.upload/100,.35,2)*.00042;
+    ctx.shadowColor='#8b5cf6';ctx.shadowBlur=8*d;
     for(let i=n-1;i>=0;i--){
       const p=((t*speed)+i/n)%1;
       const x=cx+(i-1.5)*7*d;
       const y=lerp(groundY,-r*3,p);
-      if(p<.06)impactBurst(ctx,x,groundY+3*d,p/.06,'#8b5cf6',d);
-      if(p<.94)rocket(ctx,x,Math.max(y,-r*2),r*(1-i*.06),t,i,'#8b5cf6',false,'#ffd54d');
+      if(p<.06){ctx.shadowBlur=0;impactBurst(ctx,x,groundY+3*d,p/.06,'#8b5cf6',d);ctx.shadowColor='#8b5cf6';ctx.shadowBlur=8*d;}
+      if(p<.94)mn(ctx,x,Math.max(y,-r*2),r*(1-i*.06),t,{ph:i*2,c:'#8b5cf6'});
     }
+    ctx.shadowBlur=0;
   },
   latency(ctx,w,h,t){ // one minion sprinting there and back
     ctx.clearRect(0,0,w,h);
