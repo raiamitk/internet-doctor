@@ -812,8 +812,8 @@ function rocket(ctx,x,y,r,t,i,flameCol,flameUp,minionCol){
   // window tint (metric color)
   ctx.beginPath();ctx.arc(0,-r*.35,r*.32,0,7);ctx.fillStyle=flameCol;ctx.globalAlpha=.4;ctx.fill();ctx.globalAlpha=1;ctx.stroke();
   ctx.restore();
-  // minion riding on top
-  mn(ctx,x,y-r*1.55,r*.72,t,{ph:i*2,run:false,c:minionCol});
+  // minion sitting sideways (saddle-style) astride the nose, legs dangling off one side
+  mn(ctx,x,y-r*1.05,r*.72,t,{ph:i*2,run:false,rot:Math.PI/2,c:minionCol});
 }
 function impactBurst(ctx,x,y,p,col,d){ // p in [0,1] burst progress
   const fp=clamp(p,0,1);
