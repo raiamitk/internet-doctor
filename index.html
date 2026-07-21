@@ -200,7 +200,7 @@ footer b{color:var(--muted)}
 .card.mini .val .unit{font-size:13px}
 .card.mini .grade{font-size:10px;padding:3px 9px}
 .card.mini .desc{display:none}
-.card.mini canvas{height:68px;margin-top:8px}
+.card.mini canvas{height:86px;margin-top:8px}
 .card.mini .learn{top:auto;bottom:10px;right:14px;font-size:9px}
 .t-diag{grid-column:span 3;grid-row:span 2;background:linear-gradient(165deg,rgba(139,92,246,.1),rgba(14,165,233,.05))}
 .t-diag .diag-line{gap:10px;margin-bottom:12px}
@@ -804,11 +804,13 @@ const SCENES={
     });
     const n=clamp(Math.round(R.download/40)+3,3,8);
     const v=clamp(R.download/300,.25,1)*.09;
+    ctx.shadowColor='#34d399';ctx.shadowBlur=8*d;
     for(let i=0;i<n;i++){
       const x=w*.15+((i*137)%70)/100*w+Math.sin(t*.002+i*3)*6*d;
       const y=((t*v*d)+i*991)%(h+40*1)-20;
-      mn(ctx,x,y,r,t,{ph:i*2,rot:Math.sin(t*.003+i)*.25,c:'#ffd54d'});
+      mn(ctx,x,y,r,t,{ph:i*2,rot:Math.sin(t*.003+i)*.25,c:'#34d399'});
     }
+    ctx.shadowBlur=0;
   },
   upload(ctx,w,h,t){ // minions getting sucked into a machine
     ctx.clearRect(0,0,w,h);
@@ -823,13 +825,15 @@ const SCENES={
     ctx.beginPath();ctx.arc(cx+8*d,cy-18*d,3*d,0,7);
     ctx.fillStyle=Math.sin(t*.006)>0?'#00a05c':'#e5484d';ctx.fill();ctx.stroke();
     const n=5, sp=clamp(R.upload/100,.25,1)*.00035;
+    ctx.shadowColor='#8b5cf6';ctx.shadowBlur=8*d;
     for(let i=0;i<n;i++){
       const p=((t*sp)+i/n)%1;
       const x=lerp(-15*d,cx-16*d,Math.pow(p,1.15));
       const y=cy+Math.sin(i*4.1)*(h*.3)*(1-p);
       const r=6.5*d*(1-p*.6);
-      mn(ctx,x,y,r,t,{ph:i*3,rot:p*.7,c:'#ffd54d',alpha:p>.94?(1-p)/.06:1});
+      mn(ctx,x,y,r,t,{ph:i*3,rot:p*.7,c:'#8b5cf6',alpha:p>.94?(1-p)/.06:1});
     }
+    ctx.shadowBlur=0;
   },
   latency(ctx,w,h,t){ // one minion sprinting there and back
     ctx.clearRect(0,0,w,h);
@@ -843,7 +847,9 @@ const SCENES={
     const speed=clamp(60/Math.max(8,R.latency),.4,2);
     const ph=(t*.001*speed)%2, back=ph>1, p=back?2-ph:ph;
     const x=lerp(x0+14*d,x1-14*d,p);
-    mn(ctx,x,cy-4*d,6.5*d,t,{flip:back,c:'#ffd54d'});
+    ctx.shadowColor='#38bdf8';ctx.shadowBlur=10*d;
+    mn(ctx,x,cy-4*d,6.5*d,t,{flip:back,c:'#38bdf8'});
+    ctx.shadowBlur=0;
     // little dust puffs
     ctx.fillStyle='rgba(23,19,11,.15)';
     ctx.beginPath();ctx.arc(x+(back?12:-12)*d,cy+8*d,(2+Math.sin(t*.02)*1)*d,0,7);ctx.fill();
@@ -854,7 +860,7 @@ const SCENES={
     for(let i=0;i<6;i++){
       const base=(t*.028*d+i*(w/6))%(w+26*d)-13*d;
       const jig=Math.sin(i*9.7+t*.004)*uneven*w*.05;
-      mn(ctx,base+jig,cy+Math.sin(i*5+t*.005)*uneven*8*d,5.5*d,t,{ph:i*1.7,c:uneven>.5&&i%2?'#ffb84d':'#ffd54d',sad:uneven>.7&&i%3===0});
+      mn(ctx,base+jig,cy+Math.sin(i*5+t*.005)*uneven*8*d,5.5*d,t,{ph:i*1.7,c:uneven>.5&&i%2?'#f59e0b':'#fbbf24',sad:uneven>.7&&i%3===0});
     }
   },
   stability(ctx,w,h,t){ // minions surfing the wave
@@ -890,7 +896,9 @@ const SCENES={
         if(doomed){const fp=(x-gapA)/(gapB-gapA);y=cy+fp*h*.5;rot=fp*1.6;alpha=1-fp*.8;sad=true}
         else{const jp=(x-gapA)/(gapB-gapA);y=cy-Math.sin(jp*Math.PI)*16*d} // hop!
       }
-      mn(ctx,x,y,5.5*d,t,{ph:i*1.9,rot,alpha,sad,c:'#ffd54d'});
+      if(doomed&&x>gapA&&x<gapB){ctx.shadowColor='#f87171';ctx.shadowBlur=8*d}else{ctx.shadowBlur=0}
+      mn(ctx,x,y,5.5*d,t,{ph:i*1.9,rot,alpha,sad,c:doomed&&x>gapA&&x<gapB?'#f87171':'#ffd54d'});
+      ctx.shadowBlur=0;
     }
   }
 };
